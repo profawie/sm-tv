@@ -64,6 +64,7 @@ fun HomeScreen(
     wallpaperLoading: Boolean,
     onOpenSettings: () -> Unit,
     onOpenWeather: () -> Unit,
+    onOpenCctv: () -> Unit,
 ) {
     val context = LocalContext.current
     val now = rememberNow()
@@ -86,6 +87,7 @@ fun HomeScreen(
                 ) {
                     PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(260.dp).fillMaxHeight())
                     WeatherWidget(weather, settings.location.name, Modifier.width(260.dp).fillMaxHeight(), onClick = onOpenWeather)
+                    CctvWidget(settings.cctv, Modifier.width(300.dp).fillMaxHeight(), onClick = onOpenCctv)
                 }
             }
 

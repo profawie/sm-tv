@@ -1,6 +1,9 @@
 package com.smc.tv.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,8 +33,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smc.tv.data.AppSettings
@@ -61,6 +69,15 @@ fun SettingsScreen(
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Location>>(emptyList()) }
     var searchStatus by remember { mutableStateOf<String?>(null) }
+    var cctvHost by remember { mutableStateOf(settings.cctv.host) }
+    var cctvUser by remember { mutableStateOf(settings.cctv.username) }
+    var cctvPassword by remember { mutableStateOf(settings.cctv.password) }
+
+    fun saveCctv() {
+        onUpdate {
+            it.copy(cctv = it.cctv.copy(host = cctvHost.trim(), username = cctvUser.trim(), password = cctvPassword))
+        }
+    }
 
     fun search() {
         if (query.isBlank()) return
@@ -178,8 +195,56 @@ fun SettingsScreen(
                 }
             }
         }
+
+        item {
+            Section(s.cctvSection, s.cctvHint) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    GoldTextField(
+                        value = cctvHost,
+                        onValueChange = { cctvHost = it },
+                        onDone = ::saveCctv,
+                        label = s.cctvAddress,
+                        keyboardType = KeyboardType.Uri,
+                        modifier = Modifier.width(200.dp),
+                    )
+                    GoldTextField(
+                        value = cctvUser,
+                        onValueChange = { cctvUser = it },
+                        onDone = ::saveCctv,
+                        label = s.cctvUsername,
+                        modifier = Modifier.width(180.dp),
+                    )
+                    GoldTextField(
+                        value = cctvPassword,
+                        onValueChange = { cctvPassword = it },
+                        onDone = ::saveCctv,
+                        label = s.cctvPassword,
+                        isPassword = true,
+                        modifier = Modifier.width(200.dp),
+                    )
+                    ActionChip(s.save, onClick = ::saveCctv)
+                }
+                if (settings.cctv.password.isNotBlank()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text("✓ ${s.cctvPasswordSet}", color = Gold.Light, fontSize = 13.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(s.cctvChannel, color = Ink.Muted, fontSize = 13.sp)
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items((1..CCTV_MAX_CHANNELS).toList()) { ch ->
+                        ActionChip(s.camera(ch), selected = ch == settings.cctv.channel) {
+                            onUpdate { it.copy(cctv = it.cctv.copy(channel = ch)) }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
+/** Covers 4, 8 and 16 channel recorders; unused channels simply fail to connect. */
+private const val CCTV_MAX_CHANNELS = 16
 
 @Composable
 private fun Section(title: String, subtitle: String? = null, content: @Composable () -> Unit) {
@@ -209,6 +274,11 @@ private fun ActionChip(
     )
 }
 
+/**
+ * Text field for a remote: D-pad focus only highlights it. The on-screen keyboard opens
+ * when OK is pressed, and focus returns here after Done, so moving through Settings
+ * doesn't keep popping the keyboard up.
+ */
 @Composable
 private fun GoldTextField(
     value: String,
@@ -216,21 +286,61 @@ private fun GoldTextField(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
+    label: String? = null,
+    isPassword: Boolean = false,
+    keyboardType: KeyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text,
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        placeholder = placeholder?.let { { Text(it, color = Ink.Muted) } },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { onDone() }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Gold.Primary,
-            unfocusedBorderColor = Gold.Dim,
-            focusedTextColor = Ink.Text,
-            unfocusedTextColor = Ink.Text,
-            cursorColor = Gold.Primary,
-        ),
-        modifier = modifier,
-    )
+    var editing by remember { mutableStateOf(false) }
+    var highlighted by remember { mutableStateOf(false) }
+    var fieldFocused by remember { mutableStateOf(false) }
+    val field = remember { FocusRequester() }
+    val wrapper = remember { FocusRequester() }
+    var started by remember { mutableStateOf(false) }
+
+    LaunchedEffect(editing) {
+        if (editing) {
+            started = true
+            runCatching { field.requestFocus() }
+        } else if (started) {
+            runCatching { wrapper.requestFocus() }
+        }
+    }
+
+    Box(
+        modifier
+            .focusRequester(wrapper)
+            .focusProperties { canFocus = !editing }
+            .onFocusChanged { highlighted = it.isFocused }
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { editing = true }
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            placeholder = placeholder?.let { { Text(it, color = Ink.Muted) } },
+            label = label?.let { { Text(it, color = Ink.Muted) } },
+            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                onDone()
+                editing = false
+            }),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Gold.Primary,
+                unfocusedBorderColor = if (highlighted) Gold.Primary else Gold.Dim,
+                focusedTextColor = Ink.Text,
+                unfocusedTextColor = Ink.Text,
+                cursorColor = Gold.Primary,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(field)
+                .focusProperties { canFocus = editing }
+                .onFocusChanged {
+                    // Leaving the field (Back, or D-pad out) ends editing.
+                    if (fieldFocused && !it.isFocused) editing = false
+                    fieldFocused = it.isFocused
+                },
+        )
+    }
 }

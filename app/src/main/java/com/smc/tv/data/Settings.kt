@@ -9,6 +9,15 @@ enum class Language { MS, EN }
 
 data class Location(val name: String, val latitude: Double, val longitude: Double)
 
+/** Dahua-style NVR/DVR on the home network, streamed over RTSP. */
+data class CctvSettings(
+    val host: String = "192.168.1.41",
+    val rtspPort: Int = 554,
+    val username: String = "syukri",
+    val password: String = "",
+    val channel: Int = 1,
+)
+
 data class AppSettings(
     val tvName: String = DEFAULT_TV_NAME,
     val location: Location = DEFAULT_LOCATION,
@@ -16,6 +25,7 @@ data class AppSettings(
     /** Bumped to force a new Unsplash photo. */
     val wallpaperSeed: Long = 0L,
     val language: Language = Language.MS,
+    val cctv: CctvSettings = CctvSettings(),
 ) {
     companion object {
         const val DEFAULT_TV_NAME = "Syukri's Family"
@@ -47,6 +57,13 @@ class SettingsStore(context: Context) {
             wallpaperSeed = prefs.getLong(KEY_WALLPAPER_SEED, 0L),
             language = prefs.getString(KEY_LANGUAGE, null)
                 ?.let { runCatching { Language.valueOf(it) }.getOrNull() } ?: d.language,
+            cctv = CctvSettings(
+                host = prefs.getString(KEY_CCTV_HOST, d.cctv.host) ?: d.cctv.host,
+                rtspPort = prefs.getInt(KEY_CCTV_PORT, d.cctv.rtspPort),
+                username = prefs.getString(KEY_CCTV_USER, d.cctv.username) ?: d.cctv.username,
+                password = prefs.getString(KEY_CCTV_PASSWORD, d.cctv.password) ?: d.cctv.password,
+                channel = prefs.getInt(KEY_CCTV_CHANNEL, d.cctv.channel),
+            ),
         )
     }
 
@@ -60,6 +77,11 @@ class SettingsStore(context: Context) {
             .putString(KEY_WALLPAPER, next.wallpaperTopic)
             .putLong(KEY_WALLPAPER_SEED, next.wallpaperSeed)
             .putString(KEY_LANGUAGE, next.language.name)
+            .putString(KEY_CCTV_HOST, next.cctv.host)
+            .putInt(KEY_CCTV_PORT, next.cctv.rtspPort)
+            .putString(KEY_CCTV_USER, next.cctv.username)
+            .putString(KEY_CCTV_PASSWORD, next.cctv.password)
+            .putInt(KEY_CCTV_CHANNEL, next.cctv.channel)
             .apply()
         _settings.value = next
     }
@@ -72,5 +94,10 @@ class SettingsStore(context: Context) {
         const val KEY_WALLPAPER = "wallpaper_topic"
         const val KEY_WALLPAPER_SEED = "wallpaper_seed"
         const val KEY_LANGUAGE = "language"
+        const val KEY_CCTV_HOST = "cctv_host"
+        const val KEY_CCTV_PORT = "cctv_rtsp_port"
+        const val KEY_CCTV_USER = "cctv_user"
+        const val KEY_CCTV_PASSWORD = "cctv_password"
+        const val KEY_CCTV_CHANNEL = "cctv_channel"
     }
 }

@@ -28,12 +28,13 @@ import com.smc.tv.ui.stringsFor
 import androidx.compose.runtime.CompositionLocalProvider
 import com.smc.tv.ui.WallpaperLayer
 import com.smc.tv.ui.WeatherScreen
+import com.smc.tv.ui.CctvScreen
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.delay
 
-private enum class Screen { HOME, SETTINGS, WEATHER }
+private enum class Screen { HOME, SETTINGS, WEATHER, CCTV }
 
 class MainActivity : ComponentActivity() {
     private val prayerRepo = PrayerRepository()
@@ -127,6 +128,10 @@ class MainActivity : ComponentActivity() {
                                 onBack = { screen = Screen.HOME },
                             )
                         }
+                        Screen.CCTV -> {
+                            BackHandler { screen = Screen.HOME }
+                            CctvScreen(settings.cctv, onBack = { screen = Screen.HOME })
+                        }
                         Screen.HOME -> {
                             // As a home screen, Back should stay here instead of closing the launcher.
                             BackHandler {}
@@ -138,6 +143,7 @@ class MainActivity : ComponentActivity() {
                                 wallpaperLoading = wallpaperLoading,
                                 onOpenSettings = { screen = Screen.SETTINGS },
                                 onOpenWeather = { screen = Screen.WEATHER },
+                                onOpenCctv = { screen = Screen.CCTV },
                             )
                         }
                     }

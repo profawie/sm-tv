@@ -61,6 +61,20 @@ interface Strings {
     val compass: List<String>
     fun weatherSummary(label: String, min: Int, max: Int, rainChance: Int, rainMm: Double): String
     fun radarUpdated(time: String): String
+
+    // CCTV
+    val cctvTitle: String
+    val cctvNoPassword: String
+    val cctvConnecting: String
+    val cctvError: String
+    val cctvSection: String
+    val cctvHint: String
+    val cctvAddress: String
+    val cctvUsername: String
+    val cctvPassword: String
+    val cctvPasswordSet: String
+    val cctvChannel: String
+    fun camera(channel: Int): String
 }
 
 object MalayStrings : Strings {
@@ -151,6 +165,18 @@ object MalayStrings : Strings {
         "Hari ini ${label.lowercase(locale)}, suhu $min°C hingga $max°C. " +
             "Peluang hujan $rainChance% (anggaran ${"%.1f".format(rainMm)} mm)."
     override fun radarUpdated(time: String) = "Dikemas kini $time"
+    override val cctvTitle = "CCTV"
+    override val cctvNoPassword = "Masukkan kata laluan CCTV di Tetapan"
+    override val cctvConnecting = "Menyambung…"
+    override val cctvError = "Kamera tidak dapat disambung. Cuba semula…"
+    override val cctvSection = "5. CCTV"
+    override val cctvHint = "Rangkaian rumah sahaja (RTSP)"
+    override val cctvAddress = "Alamat IP"
+    override val cctvUsername = "Nama pengguna"
+    override val cctvPassword = "Kata laluan"
+    override val cctvPasswordSet = "Kata laluan disimpan"
+    override val cctvChannel = "Kamera untuk widget"
+    override fun camera(channel: Int) = "Kamera $channel"
 }
 
 object EnglishStrings : Strings {
@@ -236,6 +262,18 @@ object EnglishStrings : Strings {
         "${label.replaceFirstChar { it.uppercase() }} today, $min°C to $max°C. " +
             "$rainChance% chance of rain (about ${"%.1f".format(rainMm)} mm)."
     override fun radarUpdated(time: String) = "Updated $time"
+    override val cctvTitle = "CCTV"
+    override val cctvNoPassword = "Enter the CCTV password in Settings"
+    override val cctvConnecting = "Connecting…"
+    override val cctvError = "Can't reach the camera. Retrying…"
+    override val cctvSection = "5. CCTV"
+    override val cctvHint = "Home network only (RTSP)"
+    override val cctvAddress = "IP address"
+    override val cctvUsername = "Username"
+    override val cctvPassword = "Password"
+    override val cctvPasswordSet = "Password saved"
+    override val cctvChannel = "Camera for the widget"
+    override fun camera(channel: Int) = "Camera $channel"
 }
 
 fun stringsFor(language: Language): Strings = when (language) {
