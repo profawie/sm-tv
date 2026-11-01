@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,6 +61,7 @@ fun HomeScreen(
     prayer: Loadable<PrayerDay>,
     weather: Loadable<Weather>,
     wallpaper: Wallpaper?,
+    wallpaperLoading: Boolean,
     onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -67,9 +69,7 @@ fun HomeScreen(
     val firstApp = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstApp.requestFocus() } }
 
-    Box(Modifier.fillMaxSize().background(Ink.Background)) {
-        WallpaperLayer(wallpaper)
-
+    Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
             Header(
                 tvName = settings.tvName,
@@ -102,7 +102,9 @@ fun HomeScreen(
             }
         }
 
-        if (wallpaper != null) {
+        if (wallpaperLoading) {
+            WallpaperLoadingBadge(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 8.dp))
+        } else if (wallpaper != null) {
             Text(
                 "Foto: ${wallpaper.photographer} / Unsplash",
                 color = Color.White.copy(alpha = 0.55f),
@@ -113,9 +115,12 @@ fun HomeScreen(
     }
 }
 
+/** Shared backdrop for Home and Settings, so a wallpaper change shows straight away. */
 @Composable
-private fun WallpaperLayer(wallpaper: Wallpaper?) {
+fun WallpaperLayer(wallpaper: Wallpaper?) {
+    Box(Modifier.fillMaxSize().background(Ink.Background))
     if (wallpaper != null) {
+        // The image is already in Coil's cache (prefetched before the switch), so this is instant.
         AsyncImage(
             model = wallpaper.imageUrl,
             contentDescription = null,
@@ -210,5 +215,19 @@ private fun AppTile(app: TvApp, modifier: Modifier, onClick: () -> Unit) {
                 Text("Pasang dari Play Store", color = Ink.Muted, fontSize = 11.sp)
             }
         }
+    }
+}
+
+@Composable
+fun WallpaperLoadingBadge(modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .background(Ink.Panel, RoundedCornerShape(50))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircularProgressIndicator(color = Gold.Primary, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Memuatkan gambar…", color = Ink.Text, fontSize = 12.sp)
     }
 }

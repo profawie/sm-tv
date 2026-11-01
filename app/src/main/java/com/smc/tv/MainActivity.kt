@@ -23,6 +23,10 @@ import com.smc.tv.ui.HomeScreen
 import com.smc.tv.ui.Loadable
 import com.smc.tv.ui.SettingsScreen
 import com.smc.tv.ui.SmTvTheme
+import com.smc.tv.ui.WallpaperLayer
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +46,8 @@ class MainActivity : ComponentActivity() {
                 var prayer by remember { mutableStateOf<Loadable<PrayerDay>>(Loadable.Loading) }
                 var weather by remember { mutableStateOf<Loadable<Weather>>(Loadable.Loading) }
                 var wallpaper by remember { mutableStateOf<Wallpaper?>(null) }
+                var wallpaperLoading by remember { mutableStateOf(false) }
+                var wallpaperError by remember { mutableStateOf<String?>(null) }
 
                 // Prayer data is per day; re-check every 30 min so it rolls over after midnight.
                 LaunchedEffect(settings.location) {
@@ -61,19 +67,35 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 // New photo every hour, or immediately when changed in Settings.
+                // The image is downloaded before it replaces the old one, so there is no blank flash.
                 LaunchedEffect(settings.wallpaperTopic, settings.wallpaperSeed) {
                     while (true) {
-                        runCatching { wallpaperRepo.random(settings.wallpaperTopic) }
+                        wallpaperLoading = wallpaperRepo.hasKey
+                        wallpaperError = null
+                        runCatching {
+                            wallpaperRepo.random(settings.wallpaperTopic)?.also { next ->
+                                val result = imageLoader.execute(
+                                    ImageRequest.Builder(this@MainActivity).data(next.imageUrl).build()
+                                )
+                                if (result !is SuccessResult) error("gambar tidak dapat dimuat turun")
+                            }
+                        }
                             .onSuccess { wallpaper = it }
+                            .onFailure { wallpaperError = it.message ?: "ralat" }
+                        wallpaperLoading = false
                         delay(60 * 60_000L)
                     }
                 }
+
+                WallpaperLayer(wallpaper)
 
                 if (showSettings) {
                     BackHandler { showSettings = false }
                     SettingsScreen(
                         settings = settings,
                         hasUnsplashKey = wallpaperRepo.hasKey,
+                        wallpaperLoading = wallpaperLoading,
+                        wallpaperError = wallpaperError,
                         weatherRepo = weatherRepo,
                         onUpdate = store::update,
                         onBack = { showSettings = false },
@@ -86,6 +108,7 @@ class MainActivity : ComponentActivity() {
                         prayer = prayer,
                         weather = weather,
                         wallpaper = wallpaper,
+                        wallpaperLoading = wallpaperLoading,
                         onOpenSettings = { showSettings = true },
                     )
                 }

@@ -44,6 +44,8 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     settings: AppSettings,
     hasUnsplashKey: Boolean,
+    wallpaperLoading: Boolean,
+    wallpaperError: String?,
     weatherRepo: WeatherRepository,
     onUpdate: ((AppSettings) -> AppSettings) -> Unit,
     onBack: () -> Unit,
@@ -72,7 +74,7 @@ fun SettingsScreen(
     }
 
     LazyColumn(
-        Modifier.fillMaxSize().background(Ink.Background).padding(horizontal = 56.dp, vertical = 28.dp),
+        Modifier.fillMaxSize().background(Ink.Background.copy(alpha = 0.72f)).padding(horizontal = 56.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item {
@@ -149,8 +151,15 @@ fun SettingsScreen(
                     }
                 }
                 Spacer(Modifier.height(14.dp))
-                ActionChip("Tukar gambar sekarang") {
-                    onUpdate { s -> s.copy(wallpaperSeed = s.wallpaperSeed + 1) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ActionChip("Tukar gambar sekarang") {
+                        onUpdate { s -> s.copy(wallpaperSeed = s.wallpaperSeed + 1) }
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    when {
+                        wallpaperLoading -> WallpaperLoadingBadge()
+                        wallpaperError != null -> Text("Gagal: $wallpaperError", color = Ink.Muted, fontSize = 13.sp)
+                    }
                 }
             }
         }
