@@ -107,7 +107,7 @@ fun HomeScreen(
                 "Foto: ${wallpaper.photographer} / Unsplash",
                 color = Color.White.copy(alpha = 0.55f),
                 fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 8.dp),
             )
         }
     }
