@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,7 +70,7 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize().background(Ink.Background)) {
         WallpaperLayer(wallpaper)
 
-        Column(Modifier.fillMaxSize().padding(horizontal = 56.dp, vertical = 32.dp)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
             Header(
                 tvName = settings.tvName,
                 clock = ClockFmt.format(now),
@@ -76,18 +78,19 @@ fun HomeScreen(
                 onGoogleTv = { openGoogleTvHome(context) },
             )
 
-            Row(
-                Modifier.weight(1f).fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(420.dp))
-                WeatherWidget(weather, settings.location.name, Modifier.width(420.dp))
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Row(
+                    Modifier.height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                ) {
+                    PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(360.dp).fillMaxHeight())
+                    WeatherWidget(weather, settings.location.name, Modifier.width(360.dp).fillMaxHeight())
+                }
             }
 
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
             ) {
                 PINNED_APPS.forEachIndexed { i, app ->
                     AppTile(
@@ -143,21 +146,21 @@ private fun WallpaperLayer(wallpaper: Wallpaper?) {
 private fun Header(tvName: String, clock: String, onOpenSettings: () -> Unit, onGoogleTv: () -> Unit) {
     val net = rememberNetworkStatus()
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(tvName, color = Gold.Primary, fontSize = 30.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        Text(tvName, color = Gold.Primary, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
 
         val (icon, label) = when (net.type) {
             LinkType.WIFI -> Icons.Filled.Wifi to (net.ssid ?: "WiFi")
             LinkType.ETHERNET -> Icons.Filled.Cable to "Ethernet"
             LinkType.NONE -> Icons.Filled.WifiOff to "Tiada sambungan"
         }
-        Icon(icon, contentDescription = null, tint = if (net.type == LinkType.NONE) Ink.Muted else Gold.Primary, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(label, color = Ink.Text, fontSize = 18.sp)
-        Spacer(Modifier.width(28.dp))
-        Text(clock, color = Ink.Text, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.width(24.dp))
+        Icon(icon, contentDescription = null, tint = if (net.type == LinkType.NONE) Ink.Muted else Gold.Primary, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(label, color = Ink.Text, fontSize = 14.sp)
+        Spacer(Modifier.width(20.dp))
+        Text(clock, color = Ink.Text, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Spacer(Modifier.width(18.dp))
         HeaderButton(Icons.Filled.Settings, "Tetapan", onOpenSettings)
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         HeaderButton(Icons.Filled.Home, "Google TV", onGoogleTv)
     }
 }
@@ -167,12 +170,12 @@ private fun HeaderButton(icon: ImageVector, label: String, onClick: () -> Unit) 
     Row(
         Modifier
             .tvFocusable(shape = RoundedCornerShape(50), focusedScale = 1.08f, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = Gold.Primary, modifier = Modifier.size(22.dp))
+        Icon(icon, contentDescription = null, tint = Gold.Primary, modifier = Modifier.size(16.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, color = Ink.Text, fontSize = 16.sp)
+        Text(label, color = Ink.Text, fontSize = 13.sp)
     }
 }
 
@@ -188,7 +191,7 @@ private fun AppTile(app: TvApp, modifier: Modifier, onClick: () -> Unit) {
     Box(
         modifier
             .tvFocusable(onClick = onClick)
-            .size(width = 240.dp, height = 135.dp),
+            .size(width = 192.dp, height = 108.dp),
         contentAlignment = Alignment.Center,
     ) {
         if (banner != null) {
@@ -203,8 +206,8 @@ private fun AppTile(app: TvApp, modifier: Modifier, onClick: () -> Unit) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(10.dp).background(Gold.Primary, CircleShape))
                 Spacer(Modifier.height(8.dp))
-                Text(app.label, color = Ink.Text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-                Text("Pasang dari Play Store", color = Ink.Muted, fontSize = 13.sp)
+                Text(app.label, color = Ink.Text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text("Pasang dari Play Store", color = Ink.Muted, fontSize = 11.sp)
             }
         }
     }

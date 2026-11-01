@@ -47,11 +47,11 @@ fun WidgetPanel(title: String, subtitle: String?, modifier: Modifier = Modifier,
         modifier
             .background(Ink.Panel, PanelShape)
             .border(1.dp, Gold.Dim.copy(alpha = 0.5f), PanelShape)
-            .padding(28.dp)
+            .padding(horizontal = 24.dp, vertical = 18.dp)
     ) {
-        Text(title, color = Gold.Primary, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-        if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 15.sp)
-        Spacer(Modifier.height(18.dp))
+        Text(title, color = Gold.Primary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(10.dp))
         content()
     }
 }
@@ -82,10 +82,10 @@ fun PrayerWidget(state: Loadable<PrayerDay>, now: Instant, modifier: Modifier = 
         if (next != null) {
             val left = Duration.between(now, next.time)
             Text(
-                "${next.name} dalam ${left.toHours()}j ${left.toMinutes() % 60}m",
-                color = Gold.Light, fontSize = 18.sp,
+                "${next.name} dalam " + if (left.toHours() > 0) "${left.toHours()} jam ${left.toMinutes() % 60} minit" else "${left.toMinutes() + 1} minit",
+                color = Gold.Light, fontSize = 15.sp,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(6.dp))
         }
         day.prayers.forEach { p ->
             val isNext = p == next
@@ -93,7 +93,7 @@ fun PrayerWidget(state: Loadable<PrayerDay>, now: Instant, modifier: Modifier = 
                 Modifier
                     .fillMaxWidth()
                     .background(if (isNext) Gold.Primary.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(10.dp))
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                    .padding(horizontal = 10.dp, vertical = 3.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 val color = when {
@@ -101,8 +101,8 @@ fun PrayerWidget(state: Loadable<PrayerDay>, now: Instant, modifier: Modifier = 
                     p.time.isBefore(now) -> Ink.Muted
                     else -> Ink.Text
                 }
-                Text(p.name, color = color, fontSize = 20.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Normal)
-                Text(TimeFmt.format(p.time), color = color, fontSize = 20.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Normal)
+                Text(p.name, color = color, fontSize = 16.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Normal)
+                Text(TimeFmt.format(p.time), color = color, fontSize = 16.sp, fontWeight = if (isNext) FontWeight.Bold else FontWeight.Normal)
             }
         }
     }
@@ -117,25 +117,25 @@ fun WeatherWidget(state: Loadable<Weather>, locationName: String, modifier: Modi
             return@WidgetPanel
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(weatherIcon(w.code, w.isDay), fontSize = 64.sp)
-            Spacer(Modifier.width(20.dp))
+            Text(weatherIcon(w.code, w.isDay), fontSize = 44.sp)
+            Spacer(Modifier.width(14.dp))
             Column {
-                Text("${w.temperature.roundToInt()}°C", color = Ink.Text, fontSize = 52.sp, fontWeight = FontWeight.Light)
-                Text(weatherLabel(w.code), color = Gold.Light, fontSize = 18.sp)
+                Text("${w.temperature.roundToInt()}°C", color = Ink.Text, fontSize = 40.sp, fontWeight = FontWeight.Light)
+                Text(weatherLabel(w.code), color = Gold.Light, fontSize = 15.sp)
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
             "Terasa ${w.feelsLike.roundToInt()}°C · Lembapan ${w.humidity}% · Angin ${w.windKmh.roundToInt()} km/j",
-            color = Ink.Muted, fontSize = 15.sp,
+            color = Ink.Muted, fontSize = 12.sp,
         )
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             w.daily.drop(1).take(3).forEach { d ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(DayFmt.format(d.date), color = Ink.Muted, fontSize = 15.sp)
-                    Text(weatherIcon(d.code), fontSize = 28.sp)
-                    Text("${d.max.roundToInt()}° / ${d.min.roundToInt()}°", color = Ink.Text, fontSize = 15.sp)
+                    Text(DayFmt.format(d.date), color = Ink.Muted, fontSize = 12.sp)
+                    Text(weatherIcon(d.code), fontSize = 22.sp)
+                    Text("${d.max.roundToInt()}° / ${d.min.roundToInt()}°", color = Ink.Text, fontSize = 12.sp)
                 }
             }
         }

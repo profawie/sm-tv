@@ -49,8 +49,9 @@ fun SettingsScreen(
     onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val firstField = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { firstField.requestFocus() } }
+    // Start on "Kembali" so the on-screen keyboard only opens when a field is chosen.
+    val backButton = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { backButton.requestFocus() } }
 
     var tvName by remember { mutableStateOf(settings.tvName) }
     var query by remember { mutableStateOf("") }
@@ -71,13 +72,13 @@ fun SettingsScreen(
     }
 
     LazyColumn(
-        Modifier.fillMaxSize().background(Ink.Background).padding(horizontal = 80.dp, vertical = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(28.dp),
+        Modifier.fillMaxSize().background(Ink.Background).padding(horizontal = 56.dp, vertical = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Tetapan", color = Gold.Primary, fontSize = 34.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                ActionChip("← Kembali", onClick = onBack)
+                Text("Tetapan", color = Gold.Primary, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                ActionChip("← Kembali", modifier = Modifier.focusRequester(backButton), onClick = onBack)
             }
         }
 
@@ -88,7 +89,7 @@ fun SettingsScreen(
                         value = tvName,
                         onValueChange = { tvName = it },
                         onDone = { onUpdate { s -> s.copy(tvName = tvName.ifBlank { AppSettings.DEFAULT_TV_NAME }) } },
-                        modifier = Modifier.width(520.dp).focusRequester(firstField),
+                        modifier = Modifier.width(420.dp),
                     )
                     Spacer(Modifier.width(16.dp))
                     ActionChip("Simpan") {
@@ -111,7 +112,7 @@ fun SettingsScreen(
                         onValueChange = { query = it },
                         placeholder = "Cari bandar, cth. Bandar Puncak Alam",
                         onDone = ::search,
-                        modifier = Modifier.width(520.dp),
+                        modifier = Modifier.width(420.dp),
                     )
                     Spacer(Modifier.width(16.dp))
                     ActionChip("Cari", onClick = ::search)
@@ -159,23 +160,28 @@ fun SettingsScreen(
 @Composable
 private fun Section(title: String, subtitle: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Text(title, color = Gold.Light, fontSize = 22.sp, fontWeight = FontWeight.Medium)
-        if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 15.sp)
-        Spacer(Modifier.height(12.dp))
+        Text(title, color = Gold.Light, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 13.sp)
+        Spacer(Modifier.height(10.dp))
         content()
     }
 }
 
 @Composable
-private fun ActionChip(label: String, selected: Boolean = false, onClick: () -> Unit) {
+private fun ActionChip(
+    label: String,
+    selected: Boolean = false,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     Text(
         label,
         color = if (selected) Gold.Primary else Ink.Text,
-        fontSize = 18.sp,
+        fontSize = 15.sp,
         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-        modifier = Modifier
+        modifier = modifier
             .tvFocusable(shape = RoundedCornerShape(12.dp), focusedScale = 1.04f, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
     )
 }
 
