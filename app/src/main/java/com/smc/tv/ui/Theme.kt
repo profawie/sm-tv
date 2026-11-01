@@ -31,6 +31,8 @@ object Gold {
 object Ink {
     val Background = Color(0xFF0A0A0A)
     val Panel = Color(0xCC111111)
+    /** Lighter panel for the home widgets so the wallpaper shows through. */
+    val Glass = Color(0xB30D0D0D)
     val PanelFocused = Color(0xE6221B0B)
     val Text = Color(0xFFF5F0E1)
     val Muted = Color(0xFFA8A090)

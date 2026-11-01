@@ -71,22 +71,6 @@ class WeatherRepository {
     }
 }
 
-/** WMO weather code -> Malay description. */
-fun weatherLabel(code: Int): String = when (code) {
-    0 -> "Cerah"
-    1 -> "Cerah berawan"
-    2 -> "Berawan separa"
-    3 -> "Mendung"
-    45, 48 -> "Berkabus"
-    51, 53, 55, 56, 57 -> "Gerimis"
-    61, 63, 66, 80, 81 -> "Hujan"
-    65, 67, 82 -> "Hujan lebat"
-    71, 73, 75, 77, 85, 86 -> "Salji"
-    95 -> "Ribut petir"
-    96, 99 -> "Ribut petir & hujan batu"
-    else -> "—"
-}
-
 /** WMO weather code -> emoji glyph for the widget. */
 fun weatherIcon(code: Int, isDay: Boolean = true): String = when (code) {
     0 -> if (isDay) "☀️" else "🌙"

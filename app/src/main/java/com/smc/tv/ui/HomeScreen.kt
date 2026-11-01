@@ -81,16 +81,16 @@ fun HomeScreen(
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Row(
                     Modifier.height(IntrinsicSize.Max),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
-                    PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(360.dp).fillMaxHeight())
-                    WeatherWidget(weather, settings.location.name, Modifier.width(360.dp).fillMaxHeight())
+                    PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(260.dp).fillMaxHeight())
+                    WeatherWidget(weather, settings.location.name, Modifier.width(260.dp).fillMaxHeight())
                 }
             }
 
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
             ) {
                 PINNED_APPS.forEachIndexed { i, app ->
                     AppTile(
@@ -106,7 +106,7 @@ fun HomeScreen(
             WallpaperLoadingBadge(Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 8.dp))
         } else if (wallpaper != null) {
             Text(
-                "Foto: ${wallpaper.photographer} / Unsplash",
+                LocalStrings.current.photoCredit(wallpaper.photographer),
                 color = Color.White.copy(alpha = 0.55f),
                 fontSize = 12.sp,
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = 8.dp),
@@ -156,7 +156,7 @@ private fun Header(tvName: String, clock: String, onOpenSettings: () -> Unit, on
         val (icon, label) = when (net.type) {
             LinkType.WIFI -> Icons.Filled.Wifi to (net.ssid ?: "WiFi")
             LinkType.ETHERNET -> Icons.Filled.Cable to "Ethernet"
-            LinkType.NONE -> Icons.Filled.WifiOff to "Tiada sambungan"
+            LinkType.NONE -> Icons.Filled.WifiOff to LocalStrings.current.noConnection
         }
         Icon(icon, contentDescription = null, tint = if (net.type == LinkType.NONE) Ink.Muted else Gold.Primary, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
@@ -164,7 +164,7 @@ private fun Header(tvName: String, clock: String, onOpenSettings: () -> Unit, on
         Spacer(Modifier.width(20.dp))
         Text(clock, color = Ink.Text, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(18.dp))
-        HeaderButton(Icons.Filled.Settings, "Tetapan", onOpenSettings)
+        HeaderButton(Icons.Filled.Settings, LocalStrings.current.settings, onOpenSettings)
         Spacer(Modifier.width(10.dp))
         HeaderButton(Icons.Filled.Home, "Google TV", onGoogleTv)
     }
@@ -196,12 +196,12 @@ private fun AppTile(app: TvApp, modifier: Modifier, onClick: () -> Unit) {
     Box(
         modifier
             .tvFocusable(onClick = onClick)
-            .size(width = 192.dp, height = 108.dp),
+            .size(width = 144.dp, height = 81.dp),
         contentAlignment = Alignment.Center,
     ) {
         if (banner != null) {
             Image(
-                bitmap = remember(banner) { banner.toBitmap(480, 270).asImageBitmap() },
+                bitmap = remember(banner) { banner.toBitmap(320, 180).asImageBitmap() },
                 contentDescription = app.label,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -211,8 +211,8 @@ private fun AppTile(app: TvApp, modifier: Modifier, onClick: () -> Unit) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(10.dp).background(Gold.Primary, CircleShape))
                 Spacer(Modifier.height(8.dp))
-                Text(app.label, color = Ink.Text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Text("Pasang dari Play Store", color = Ink.Muted, fontSize = 11.sp)
+                Text(app.label, color = Ink.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(LocalStrings.current.installFromPlayStore, color = Ink.Muted, fontSize = 9.sp)
             }
         }
     }
@@ -228,6 +228,6 @@ fun WallpaperLoadingBadge(modifier: Modifier = Modifier) {
     ) {
         CircularProgressIndicator(color = Gold.Primary, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Memuatkan gambar…", color = Ink.Text, fontSize = 12.sp)
+        Text(LocalStrings.current.loadingImage, color = Ink.Text, fontSize = 12.sp)
     }
 }

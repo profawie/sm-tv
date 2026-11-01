@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+enum class Language { MS, EN }
+
 data class Location(val name: String, val latitude: Double, val longitude: Double)
 
 data class AppSettings(
@@ -13,6 +15,7 @@ data class AppSettings(
     val wallpaperTopic: String = DEFAULT_WALLPAPER_TOPIC,
     /** Bumped to force a new Unsplash photo. */
     val wallpaperSeed: Long = 0L,
+    val language: Language = Language.MS,
 ) {
     companion object {
         const val DEFAULT_TV_NAME = "Syukri's Family"
@@ -21,16 +24,9 @@ data class AppSettings(
     }
 }
 
-/** Unsplash search keywords offered in Settings, with Malay labels. */
+/** Unsplash search keywords offered in Settings; labels come from Strings.wallpaperTopic. */
 val WALLPAPER_TOPICS = listOf(
-    "nature" to "Alam semula jadi",
-    "mosque" to "Masjid",
-    "mountains" to "Gunung",
-    "beach" to "Pantai",
-    "forest" to "Hutan",
-    "night sky" to "Langit malam",
-    "city skyline" to "Bandar",
-    "malaysia" to "Malaysia",
+    "nature", "mosque", "mountains", "beach", "forest", "night sky", "city skyline", "malaysia",
 )
 
 class SettingsStore(context: Context) {
@@ -49,6 +45,8 @@ class SettingsStore(context: Context) {
             ),
             wallpaperTopic = prefs.getString(KEY_WALLPAPER, d.wallpaperTopic) ?: d.wallpaperTopic,
             wallpaperSeed = prefs.getLong(KEY_WALLPAPER_SEED, 0L),
+            language = prefs.getString(KEY_LANGUAGE, null)
+                ?.let { runCatching { Language.valueOf(it) }.getOrNull() } ?: d.language,
         )
     }
 
@@ -61,6 +59,7 @@ class SettingsStore(context: Context) {
             .putFloat(KEY_LOC_LON, next.location.longitude.toFloat())
             .putString(KEY_WALLPAPER, next.wallpaperTopic)
             .putLong(KEY_WALLPAPER_SEED, next.wallpaperSeed)
+            .putString(KEY_LANGUAGE, next.language.name)
             .apply()
         _settings.value = next
     }
@@ -72,5 +71,6 @@ class SettingsStore(context: Context) {
         const val KEY_LOC_LON = "loc_lon"
         const val KEY_WALLPAPER = "wallpaper_topic"
         const val KEY_WALLPAPER_SEED = "wallpaper_seed"
+        const val KEY_LANGUAGE = "language"
     }
 }

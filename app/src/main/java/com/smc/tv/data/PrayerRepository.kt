@@ -7,7 +7,9 @@ import java.time.ZoneId
 
 val MALAYSIA_ZONE: ZoneId = ZoneId.of("Asia/Kuala_Lumpur")
 
-data class Prayer(val name: String, val time: Instant)
+enum class PrayerId { FAJR, SUNRISE, DHUHR, ASR, MAGHRIB, ISHA }
+
+data class Prayer(val id: PrayerId, val time: Instant)
 
 data class PrayerDay(
     val zone: String,
@@ -34,7 +36,7 @@ class PrayerRepository {
         val days = json.getJSONArray("prayers")
         val day = (0 until days.length()).map { days.getJSONObject(it) }
             .firstOrNull { it.getInt("day") == date.dayOfMonth }
-            ?: error("Tiada data untuk ${date.dayOfMonth}")
+            ?: error("no data for day ${date.dayOfMonth}")
 
         fun at(field: String) = Instant.ofEpochSecond(day.getLong(field))
         return PrayerDay(
@@ -42,26 +44,13 @@ class PrayerRepository {
             date = date,
             hijri = day.optString("hijri"),
             prayers = listOf(
-                Prayer("Subuh", at("fajr")),
-                Prayer("Syuruk", at("syuruk")),
-                Prayer("Zohor", at("dhuhr")),
-                Prayer("Asar", at("asr")),
-                Prayer("Maghrib", at("maghrib")),
-                Prayer("Isyak", at("isha")),
+                Prayer(PrayerId.FAJR, at("fajr")),
+                Prayer(PrayerId.SUNRISE, at("syuruk")),
+                Prayer(PrayerId.DHUHR, at("dhuhr")),
+                Prayer(PrayerId.ASR, at("asr")),
+                Prayer(PrayerId.MAGHRIB, at("maghrib")),
+                Prayer(PrayerId.ISHA, at("isha")),
             ),
         )
     }
-}
-
-private val HIJRI_MONTHS = listOf(
-    "Muharram", "Safar", "Rabiulawal", "Rabiulakhir", "Jamadilawal", "Jamadilakhir",
-    "Rejab", "Syaaban", "Ramadan", "Syawal", "Zulkaedah", "Zulhijjah",
-)
-
-/** "1448-05-21" -> "21 Jamadilawal 1448H" */
-fun formatHijri(raw: String): String {
-    val parts = raw.split("-")
-    if (parts.size != 3) return raw
-    val month = parts[1].toIntOrNull()?.let { HIJRI_MONTHS.getOrNull(it - 1) } ?: return raw
-    return "${parts[2].trimStart('0')} $month ${parts[0]}H"
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smc.tv.data.AppSettings
+import com.smc.tv.data.Language
 import com.smc.tv.data.Location
 import com.smc.tv.data.WALLPAPER_TOPICS
 import com.smc.tv.data.WeatherRepository
@@ -50,6 +51,7 @@ fun SettingsScreen(
     onUpdate: ((AppSettings) -> AppSettings) -> Unit,
     onBack: () -> Unit,
 ) {
+    val s = LocalStrings.current
     val scope = rememberCoroutineScope()
     // Start on "Kembali" so the on-screen keyboard only opens when a field is chosen.
     val backButton = remember { FocusRequester() }
@@ -62,14 +64,14 @@ fun SettingsScreen(
 
     fun search() {
         if (query.isBlank()) return
-        searchStatus = "Mencari…"
+        searchStatus = s.searching
         scope.launch {
             runCatching { weatherRepo.searchPlaces(query) }
                 .onSuccess {
                     results = it
-                    searchStatus = if (it.isEmpty()) "Tiada hasil untuk \"$query\"" else null
+                    searchStatus = if (it.isEmpty()) s.noResults(query) else null
                 }
-                .onFailure { searchStatus = "Carian gagal: ${it.message}" }
+                .onFailure { searchStatus = s.searchFailed(it.message) }
         }
     }
 
@@ -79,13 +81,13 @@ fun SettingsScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Tetapan", color = Gold.Primary, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                ActionChip("← Kembali", modifier = Modifier.focusRequester(backButton), onClick = onBack)
+                Text(s.settings, color = Gold.Primary, fontSize = 26.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                ActionChip(s.back, modifier = Modifier.focusRequester(backButton), onClick = onBack)
             }
         }
 
         item {
-            Section("1. Nama TV") {
+            Section(s.tvNameSection) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GoldTextField(
                         value = tvName,
@@ -94,11 +96,11 @@ fun SettingsScreen(
                         modifier = Modifier.width(420.dp),
                     )
                     Spacer(Modifier.width(16.dp))
-                    ActionChip("Simpan") {
+                    ActionChip(s.save) {
                         onUpdate { s -> s.copy(tvName = tvName.ifBlank { AppSettings.DEFAULT_TV_NAME }) }
                     }
                     Spacer(Modifier.width(12.dp))
-                    ActionChip("Lalai") {
+                    ActionChip(s.reset) {
                         tvName = AppSettings.DEFAULT_TV_NAME
                         onUpdate { s -> s.copy(tvName = AppSettings.DEFAULT_TV_NAME) }
                     }
@@ -107,19 +109,19 @@ fun SettingsScreen(
         }
 
         item {
-            Section("2. Lokasi", "Semasa: ${settings.location.name}") {
+            Section(s.locationSection, s.currentLocation(settings.location.name)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GoldTextField(
                         value = query,
                         onValueChange = { query = it },
-                        placeholder = "Cari bandar, cth. Bandar Puncak Alam",
+                        placeholder = s.searchHint,
                         onDone = ::search,
                         modifier = Modifier.width(420.dp),
                     )
                     Spacer(Modifier.width(16.dp))
-                    ActionChip("Cari", onClick = ::search)
+                    ActionChip(s.search, onClick = ::search)
                     Spacer(Modifier.width(12.dp))
-                    ActionChip("Lalai") {
+                    ActionChip(s.reset) {
                         onUpdate { s -> s.copy(location = AppSettings.DEFAULT_LOCATION) }
                     }
                 }
@@ -140,25 +142,38 @@ fun SettingsScreen(
 
         item {
             Section(
-                "3. Wallpaper (Unsplash)",
-                if (hasUnsplashKey) "Pilih tema gambar latar" else "Kunci Unsplash belum ditetapkan, latar gelap digunakan",
+                s.wallpaperSection,
+                if (hasUnsplashKey) s.wallpaperHint else s.wallpaperNoKey,
             ) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(WALLPAPER_TOPICS) { (topic, label) ->
-                        ActionChip(label, selected = topic == settings.wallpaperTopic) {
+                    items(WALLPAPER_TOPICS) { topic ->
+                        ActionChip(s.wallpaperTopic(topic), selected = topic == settings.wallpaperTopic) {
                             onUpdate { s -> s.copy(wallpaperTopic = topic, wallpaperSeed = s.wallpaperSeed + 1) }
                         }
                     }
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ActionChip("Tukar gambar sekarang") {
+                    ActionChip(s.changeWallpaperNow) {
                         onUpdate { s -> s.copy(wallpaperSeed = s.wallpaperSeed + 1) }
                     }
                     Spacer(Modifier.width(16.dp))
                     when {
                         wallpaperLoading -> WallpaperLoadingBadge()
-                        wallpaperError != null -> Text("Gagal: $wallpaperError", color = Ink.Muted, fontSize = 13.sp)
+                        wallpaperError != null -> Text(s.failed(wallpaperError), color = Ink.Muted, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+
+        item {
+            Section(s.languageSection) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ActionChip("Bahasa Melayu", selected = settings.language == Language.MS) {
+                        onUpdate { it.copy(language = Language.MS) }
+                    }
+                    ActionChip("English", selected = settings.language == Language.EN) {
+                        onUpdate { it.copy(language = Language.EN) }
                     }
                 }
             }
