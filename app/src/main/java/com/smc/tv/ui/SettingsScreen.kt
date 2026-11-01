@@ -31,6 +31,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -43,6 +45,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smc.tv.data.AppSettings
+import com.smc.tv.data.CctvStream
+import com.smc.tv.data.rtspUrl
 import com.smc.tv.data.Language
 import com.smc.tv.data.Location
 import com.smc.tv.data.WALLPAPER_TOPICS
@@ -238,6 +242,15 @@ fun SettingsScreen(
                         }
                     }
                 }
+                // Live preview of the chosen camera, so picking a channel shows it straight away.
+                Spacer(Modifier.height(12.dp))
+                CctvPlayer(
+                    url = settings.cctv.rtspUrl(CctvStream.SUB),
+                    modifier = Modifier
+                        .width(384.dp)
+                        .aspectRatio(16f / 9f)
+                        .clip(RoundedCornerShape(12.dp)),
+                )
             }
         }
     }
