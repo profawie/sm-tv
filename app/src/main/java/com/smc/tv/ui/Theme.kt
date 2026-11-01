@@ -62,6 +62,7 @@ fun SmTvTheme(content: @Composable () -> Unit) {
 fun Modifier.tvFocusable(
     shape: Shape = RoundedCornerShape(16.dp),
     focusedScale: Float = 1.06f,
+    idleBackground: Color = Ink.Panel,
     onFocus: (Boolean) -> Unit = {},
     onClick: () -> Unit,
 ): Modifier = composed {
@@ -74,7 +75,7 @@ fun Modifier.tvFocusable(
             onFocus(it.isFocused)
         }
         .clip(shape)
-        .background(if (focused) Ink.PanelFocused else Ink.Panel, shape)
+        .background(if (focused) Ink.PanelFocused else idleBackground, shape)
         .border(if (focused) 3.dp else 1.dp, if (focused) Gold.Primary else Gold.Dim.copy(alpha = 0.4f), shape)
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
 }

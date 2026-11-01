@@ -40,11 +40,21 @@ sealed interface Loadable<out T> {
 }
 
 @Composable
-fun WidgetPanel(title: String, subtitle: String?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun WidgetPanel(
+    title: String,
+    subtitle: String?,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    val frame = if (onClick != null) {
+        Modifier.tvFocusable(shape = PanelShape, focusedScale = 1.03f, idleBackground = Ink.Glass, onClick = onClick)
+    } else {
+        Modifier.background(Ink.Glass, PanelShape).border(1.dp, Gold.Dim.copy(alpha = 0.5f), PanelShape)
+    }
     Column(
         modifier
-            .background(Ink.Glass, PanelShape)
-            .border(1.dp, Gold.Dim.copy(alpha = 0.5f), PanelShape)
+            .then(frame)
             .padding(horizontal = 18.dp, vertical = 14.dp)
     ) {
         Text(title, color = Gold.Primary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
@@ -111,11 +121,16 @@ fun PrayerWidget(state: Loadable<PrayerDay>, now: Instant, modifier: Modifier = 
 }
 
 @Composable
-fun WeatherWidget(state: Loadable<Weather>, locationName: String, modifier: Modifier = Modifier) {
+fun WeatherWidget(
+    state: Loadable<Weather>,
+    locationName: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
     val s = LocalStrings.current
     val dayFmt = DateTimeFormatter.ofPattern("EEE", s.locale)
     val w = (state as? Loadable.Ready)?.value
-    WidgetPanel(title = s.weatherTitle, subtitle = locationName, modifier = modifier) {
+    WidgetPanel(title = s.weatherTitle, subtitle = locationName, modifier = modifier, onClick = onClick) {
         if (w == null) {
             LoadingOrError(state)
             return@WidgetPanel

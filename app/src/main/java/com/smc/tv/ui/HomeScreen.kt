@@ -63,6 +63,7 @@ fun HomeScreen(
     wallpaper: Wallpaper?,
     wallpaperLoading: Boolean,
     onOpenSettings: () -> Unit,
+    onOpenWeather: () -> Unit,
 ) {
     val context = LocalContext.current
     val now = rememberNow()
@@ -84,7 +85,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(260.dp).fillMaxHeight())
-                    WeatherWidget(weather, settings.location.name, Modifier.width(260.dp).fillMaxHeight())
+                    WeatherWidget(weather, settings.location.name, Modifier.width(260.dp).fillMaxHeight(), onClick = onOpenWeather)
                 }
             }
 

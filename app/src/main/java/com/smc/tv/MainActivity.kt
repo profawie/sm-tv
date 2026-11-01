@@ -27,10 +27,13 @@ import com.smc.tv.ui.LocalStrings
 import com.smc.tv.ui.stringsFor
 import androidx.compose.runtime.CompositionLocalProvider
 import com.smc.tv.ui.WallpaperLayer
+import com.smc.tv.ui.WeatherScreen
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.delay
+
+private enum class Screen { HOME, SETTINGS, WEATHER }
 
 class MainActivity : ComponentActivity() {
     private val prayerRepo = PrayerRepository()
@@ -46,7 +49,8 @@ class MainActivity : ComponentActivity() {
             val settings by store.settings.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalStrings provides stringsFor(settings.language)) {
                 SmTvTheme {
-                    var showSettings by remember { mutableStateOf(false) }
+                    var screen by remember { mutableStateOf(Screen.HOME) }
+                    var radarTiles by remember { mutableStateOf<String?>(null) }
                     var prayer by remember { mutableStateOf<Loadable<PrayerDay>>(Loadable.Loading) }
                     var weather by remember { mutableStateOf<Loadable<Weather>>(Loadable.Loading) }
                     var wallpaper by remember { mutableStateOf<Wallpaper?>(null) }
@@ -93,28 +97,49 @@ class MainActivity : ComponentActivity() {
 
                     WallpaperLayer(wallpaper)
 
-                    if (showSettings) {
-                        BackHandler { showSettings = false }
-                        SettingsScreen(
-                            settings = settings,
-                            hasUnsplashKey = wallpaperRepo.hasKey,
-                            wallpaperLoading = wallpaperLoading,
-                            wallpaperError = wallpaperError,
-                            weatherRepo = weatherRepo,
-                            onUpdate = store::update,
-                            onBack = { showSettings = false },
-                        )
-                    } else {
-                        // As a home screen, Back should stay here instead of closing the launcher.
-                        BackHandler {}
-                        HomeScreen(
-                            settings = settings,
-                            prayer = prayer,
-                            weather = weather,
-                            wallpaper = wallpaper,
-                            wallpaperLoading = wallpaperLoading,
-                            onOpenSettings = { showSettings = true },
-                        )
+                    // Radar frames update every 10 minutes; only fetch while the weather screen is open.
+                    LaunchedEffect(screen) {
+                        while (screen == Screen.WEATHER) {
+                            weatherRepo.radarTileTemplate()?.let { radarTiles = it }
+                            delay(10 * 60_000L)
+                        }
+                    }
+
+                    when (screen) {
+                        Screen.SETTINGS -> {
+                            BackHandler { screen = Screen.HOME }
+                            SettingsScreen(
+                                settings = settings,
+                                hasUnsplashKey = wallpaperRepo.hasKey,
+                                wallpaperLoading = wallpaperLoading,
+                                wallpaperError = wallpaperError,
+                                weatherRepo = weatherRepo,
+                                onUpdate = store::update,
+                                onBack = { screen = Screen.HOME },
+                            )
+                        }
+                        Screen.WEATHER -> {
+                            BackHandler { screen = Screen.HOME }
+                            WeatherScreen(
+                                state = weather,
+                                location = settings.location,
+                                radarTileTemplate = radarTiles,
+                                onBack = { screen = Screen.HOME },
+                            )
+                        }
+                        Screen.HOME -> {
+                            // As a home screen, Back should stay here instead of closing the launcher.
+                            BackHandler {}
+                            HomeScreen(
+                                settings = settings,
+                                prayer = prayer,
+                                weather = weather,
+                                wallpaper = wallpaper,
+                                wallpaperLoading = wallpaperLoading,
+                                onOpenSettings = { screen = Screen.SETTINGS },
+                                onOpenWeather = { screen = Screen.WEATHER },
+                            )
+                        }
                     }
                 }
             }

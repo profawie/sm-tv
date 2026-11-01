@@ -41,6 +41,26 @@ interface Strings {
     val installFromPlayStore: String
     fun photoCredit(name: String): String
     fun wallpaperTopic(topic: String): String
+
+    // Full weather screen
+    val today: String
+    val next24Hours: String
+    val details: String
+    val rainRadar: String
+    val feelsLike: String
+    val humidity: String
+    val wind: String
+    val pressure: String
+    val visibility: String
+    val cloudCover: String
+    val uvIndex: String
+    val sunrise: String
+    val sunset: String
+    val rainToday: String
+    /** 8-point compass, starting at north and going clockwise. */
+    val compass: List<String>
+    fun weatherSummary(label: String, min: Int, max: Int, rainChance: Int, rainMm: Double): String
+    fun radarUpdated(time: String): String
 }
 
 object MalayStrings : Strings {
@@ -112,6 +132,25 @@ object MalayStrings : Strings {
         "city skyline" -> "Bandar"
         else -> topic.replaceFirstChar { it.uppercase() }
     }
+    override val today = "Hari ini"
+    override val next24Hours = "24 jam akan datang"
+    override val details = "Butiran"
+    override val rainRadar = "Radar hujan"
+    override val feelsLike = "Terasa seperti"
+    override val humidity = "Kelembapan"
+    override val wind = "Angin"
+    override val pressure = "Tekanan"
+    override val visibility = "Jarak penglihatan"
+    override val cloudCover = "Litupan awan"
+    override val uvIndex = "Indeks UV"
+    override val sunrise = "Matahari terbit"
+    override val sunset = "Matahari terbenam"
+    override val rainToday = "Hujan hari ini"
+    override val compass = listOf("U", "TL", "T", "TG", "S", "BD", "B", "BL")
+    override fun weatherSummary(label: String, min: Int, max: Int, rainChance: Int, rainMm: Double) =
+        "Hari ini ${label.lowercase(locale)}, suhu $min°C hingga $max°C. " +
+            "Peluang hujan $rainChance% (anggaran ${"%.1f".format(rainMm)} mm)."
+    override fun radarUpdated(time: String) = "Dikemas kini $time"
 }
 
 object EnglishStrings : Strings {
@@ -178,6 +217,25 @@ object EnglishStrings : Strings {
         "city skyline" -> "City"
         else -> topic.replaceFirstChar { it.uppercase() }
     }
+    override val today = "Today"
+    override val next24Hours = "Next 24 hours"
+    override val details = "Details"
+    override val rainRadar = "Rain radar"
+    override val feelsLike = "Feels like"
+    override val humidity = "Humidity"
+    override val wind = "Wind"
+    override val pressure = "Pressure"
+    override val visibility = "Visibility"
+    override val cloudCover = "Cloud cover"
+    override val uvIndex = "UV index"
+    override val sunrise = "Sunrise"
+    override val sunset = "Sunset"
+    override val rainToday = "Rain today"
+    override val compass = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+    override fun weatherSummary(label: String, min: Int, max: Int, rainChance: Int, rainMm: Double) =
+        "${label.replaceFirstChar { it.uppercase() }} today, $min°C to $max°C. " +
+            "$rainChance% chance of rain (about ${"%.1f".format(rainMm)} mm)."
+    override fun radarUpdated(time: String) = "Updated $time"
 }
 
 fun stringsFor(language: Language): Strings = when (language) {
