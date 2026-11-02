@@ -75,6 +75,25 @@ interface Strings {
     val cctvPasswordSet: String
     val cctvChannel: String
     fun camera(channel: Int): String
+
+    // Solar
+    val solarTitle: String
+    val solarNoToken: String
+    val solarNow: String
+    val solarToday: String
+    val solarMonth: String
+    val solarTotal: String
+    fun solarUpdated(time: String): String
+    val solarSection: String
+    val solarHint: String
+    val solarToken: String
+    val solarTokenSaved: String
+
+    // Settings layout, launcher
+    val general: String
+    val about: String
+    val version: String
+    val allApps: String
 }
 
 object MalayStrings : Strings {
@@ -83,21 +102,21 @@ object MalayStrings : Strings {
     override val back = "← Kembali"
     override val save = "Simpan"
     override val reset = "Lalai"
-    override val tvNameSection = "1. Nama TV"
-    override val locationSection = "2. Lokasi"
+    override val tvNameSection = "Nama TV"
+    override val locationSection = "Lokasi"
     override fun currentLocation(name: String) = "Semasa: $name"
     override val searchHint = "Cari bandar, cth. Bandar Puncak Alam"
     override val search = "Cari"
     override val searching = "Mencari…"
     override fun noResults(query: String) = "Tiada hasil untuk \"$query\""
     override fun searchFailed(reason: String?) = "Carian gagal: ${reason ?: "ralat"}"
-    override val wallpaperSection = "3. Wallpaper (Unsplash)"
+    override val wallpaperSection = "Wallpaper"
     override val wallpaperHint = "Pilih tema gambar latar"
     override val wallpaperNoKey = "Kunci Unsplash belum ditetapkan, latar gelap digunakan"
     override val changeWallpaperNow = "Tukar gambar sekarang"
     override val loadingImage = "Memuatkan gambar…"
     override fun failed(reason: String?) = "Gagal: ${reason ?: "ralat"}"
-    override val languageSection = "4. Bahasa / Language"
+    override val languageSection = "Bahasa / Language"
     override val loading = "Memuatkan…"
     override fun loadFailed(reason: String?) = "Gagal dimuatkan: ${reason ?: "ralat"}"
     override val prayerTitle = "Waktu Solat"
@@ -169,7 +188,7 @@ object MalayStrings : Strings {
     override val cctvNoPassword = "Masukkan kata laluan CCTV di Tetapan"
     override val cctvConnecting = "Menyambung…"
     override val cctvError = "Kamera tidak dapat disambung. Cuba semula…"
-    override val cctvSection = "5. CCTV"
+    override val cctvSection = "CCTV"
     override val cctvHint = "Rangkaian rumah sahaja (RTSP)"
     override val cctvAddress = "Alamat IP"
     override val cctvUsername = "Nama pengguna"
@@ -177,6 +196,21 @@ object MalayStrings : Strings {
     override val cctvPasswordSet = "Kata laluan disimpan"
     override val cctvChannel = "Kamera untuk widget"
     override fun camera(channel: Int) = "Kamera $channel"
+    override val solarTitle = "Solar"
+    override val solarNoToken = "Masukkan token API Growatt di Tetapan"
+    override val solarNow = "Kuasa semasa"
+    override val solarToday = "Hari ini"
+    override val solarMonth = "Bulan ini"
+    override val solarTotal = "Jumlah"
+    override fun solarUpdated(time: String) = "Dikemas kini $time"
+    override val solarSection = "Solar (Growatt)"
+    override val solarHint = "Log masuk ke server.growatt.com, kemudian dapatkan API token akaun anda dan masukkan di sini."
+    override val solarToken = "Token API"
+    override val solarTokenSaved = "Token disimpan"
+    override val general = "Umum"
+    override val about = "Tentang"
+    override val version = "Versi"
+    override val allApps = "Semua App"
 }
 
 object EnglishStrings : Strings {
@@ -185,21 +219,21 @@ object EnglishStrings : Strings {
     override val back = "← Back"
     override val save = "Save"
     override val reset = "Default"
-    override val tvNameSection = "1. TV name"
-    override val locationSection = "2. Location"
+    override val tvNameSection = "TV name"
+    override val locationSection = "Location"
     override fun currentLocation(name: String) = "Current: $name"
     override val searchHint = "Search a town, e.g. Bandar Puncak Alam"
     override val search = "Search"
     override val searching = "Searching…"
     override fun noResults(query: String) = "No results for \"$query\""
     override fun searchFailed(reason: String?) = "Search failed: ${reason ?: "error"}"
-    override val wallpaperSection = "3. Wallpaper (Unsplash)"
+    override val wallpaperSection = "Wallpaper"
     override val wallpaperHint = "Choose a background theme"
     override val wallpaperNoKey = "Unsplash key not set, using a dark background"
     override val changeWallpaperNow = "Change photo now"
     override val loadingImage = "Loading photo…"
     override fun failed(reason: String?) = "Failed: ${reason ?: "error"}"
-    override val languageSection = "4. Language / Bahasa"
+    override val languageSection = "Language / Bahasa"
     override val loading = "Loading…"
     override fun loadFailed(reason: String?) = "Couldn't load: ${reason ?: "error"}"
     override val prayerTitle = "Prayer Times"
@@ -266,7 +300,7 @@ object EnglishStrings : Strings {
     override val cctvNoPassword = "Enter the CCTV password in Settings"
     override val cctvConnecting = "Connecting…"
     override val cctvError = "Can't reach the camera. Retrying…"
-    override val cctvSection = "5. CCTV"
+    override val cctvSection = "CCTV"
     override val cctvHint = "Home network only (RTSP)"
     override val cctvAddress = "IP address"
     override val cctvUsername = "Username"
@@ -274,6 +308,21 @@ object EnglishStrings : Strings {
     override val cctvPasswordSet = "Password saved"
     override val cctvChannel = "Camera for the widget"
     override fun camera(channel: Int) = "Camera $channel"
+    override val solarTitle = "Solar"
+    override val solarNoToken = "Enter your Growatt API token in Settings"
+    override val solarNow = "Power now"
+    override val solarToday = "Today"
+    override val solarMonth = "This month"
+    override val solarTotal = "Total"
+    override fun solarUpdated(time: String) = "Updated $time"
+    override val solarSection = "Solar (Growatt)"
+    override val solarHint = "Sign in at server.growatt.com, get your account's API token and enter it here."
+    override val solarToken = "API token"
+    override val solarTokenSaved = "Token saved"
+    override val general = "General"
+    override val about = "About"
+    override val version = "Version"
+    override val allApps = "All apps"
 }
 
 fun stringsFor(language: Language): Strings = when (language) {

@@ -117,3 +117,22 @@ fun openGoogleTvHome(context: Context) {
         }
     }
 }
+
+/** False once the stock launcher is disabled (SM TV set as the only home screen). */
+fun isGoogleTvHomeAvailable(context: Context): Boolean {
+    val pm = context.packageManager
+    return STOCK_LAUNCHERS.any { pkg ->
+        runCatching { pm.getApplicationInfo(pkg, 0).enabled }.getOrDefault(false)
+    }
+}
+
+/** Every launchable TV app, for the "All apps" screen. */
+fun installedTvApps(context: Context): List<TvApp> {
+    val pm = context.packageManager
+    val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+    return pm.queryIntentActivities(intent, 0)
+        .map { TvApp(it.loadLabel(pm).toString(), it.activityInfo.packageName) }
+        .filter { it.packageName != context.packageName }
+        .distinctBy { it.packageName }
+        .sortedBy { it.label.lowercase() }
+}

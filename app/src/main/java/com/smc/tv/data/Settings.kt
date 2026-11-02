@@ -26,6 +26,8 @@ data class AppSettings(
     val wallpaperSeed: Long = 0L,
     val language: Language = Language.MS,
     val cctv: CctvSettings = CctvSettings(),
+    /** Growatt OpenAPI token, entered on the TV. */
+    val solarToken: String = "",
 ) {
     companion object {
         const val DEFAULT_TV_NAME = "Syukri's Family"
@@ -64,6 +66,7 @@ class SettingsStore(context: Context) {
                 password = prefs.getString(KEY_CCTV_PASSWORD, d.cctv.password) ?: d.cctv.password,
                 channel = prefs.getInt(KEY_CCTV_CHANNEL, d.cctv.channel),
             ),
+            solarToken = prefs.getString(KEY_SOLAR_TOKEN, d.solarToken) ?: d.solarToken,
         )
     }
 
@@ -82,6 +85,7 @@ class SettingsStore(context: Context) {
             .putString(KEY_CCTV_USER, next.cctv.username)
             .putString(KEY_CCTV_PASSWORD, next.cctv.password)
             .putInt(KEY_CCTV_CHANNEL, next.cctv.channel)
+            .putString(KEY_SOLAR_TOKEN, next.solarToken)
             .apply()
         _settings.value = next
     }
@@ -99,5 +103,6 @@ class SettingsStore(context: Context) {
         const val KEY_CCTV_USER = "cctv_user"
         const val KEY_CCTV_PASSWORD = "cctv_password"
         const val KEY_CCTV_CHANNEL = "cctv_channel"
+        const val KEY_SOLAR_TOKEN = "solar_token"
     }
 }

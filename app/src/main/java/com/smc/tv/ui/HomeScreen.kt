@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Cable
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -48,6 +49,7 @@ import coil.compose.AsyncImage
 import com.smc.tv.data.AppSettings
 import com.smc.tv.data.MALAYSIA_ZONE
 import com.smc.tv.data.PrayerDay
+import com.smc.tv.data.SolarStatus
 import com.smc.tv.data.Wallpaper
 import com.smc.tv.data.Weather
 import java.time.format.DateTimeFormatter
@@ -60,11 +62,13 @@ fun HomeScreen(
     settings: AppSettings,
     prayer: Loadable<PrayerDay>,
     weather: Loadable<Weather>,
+    solar: Loadable<SolarStatus>?,
     wallpaper: Wallpaper?,
     wallpaperLoading: Boolean,
     onOpenSettings: () -> Unit,
     onOpenWeather: () -> Unit,
     onOpenCctv: () -> Unit,
+    onOpenAllApps: () -> Unit,
 ) {
     val context = LocalContext.current
     val now = rememberNow()
@@ -77,19 +81,25 @@ fun HomeScreen(
                 tvName = settings.tvName,
                 clock = ClockFmt.format(now),
                 onOpenSettings = onOpenSettings,
+                onOpenAllApps = onOpenAllApps,
                 onGoogleTv = { openGoogleTvHome(context) },
             )
 
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Row(
-                    Modifier.height(IntrinsicSize.Max),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                ) {
-                    PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.width(260.dp).fillMaxHeight())
-                    WeatherWidget(weather, settings.location.name, Modifier.width(260.dp).fillMaxHeight(), onClick = onOpenWeather)
-                    CctvWidget(settings.cctv, Modifier.width(300.dp).fillMaxHeight(), onClick = onOpenCctv)
-                }
+            Spacer(Modifier.height(14.dp))
+            // Row 1: prayer times across the full width.
+            PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.fillMaxWidth())
+            Spacer(Modifier.height(14.dp))
+
+            // Row 2: weather, solar and CCTV side by side.
+            Row(
+                Modifier.weight(1f).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                WeatherWidget(weather, settings.location.name, Modifier.weight(1f).fillMaxHeight(), onClick = onOpenWeather)
+                SolarWidget(solar, Modifier.weight(1f).fillMaxHeight())
+                CctvWidget(settings.cctv, Modifier.weight(1.2f).fillMaxHeight(), onClick = onOpenCctv)
             }
+            Spacer(Modifier.height(14.dp))
 
             Row(
                 Modifier.fillMaxWidth(),
@@ -151,8 +161,16 @@ fun WallpaperLayer(wallpaper: Wallpaper?) {
 }
 
 @Composable
-private fun Header(tvName: String, clock: String, onOpenSettings: () -> Unit, onGoogleTv: () -> Unit) {
+private fun Header(
+    tvName: String,
+    clock: String,
+    onOpenSettings: () -> Unit,
+    onOpenAllApps: () -> Unit,
+    onGoogleTv: () -> Unit,
+) {
     val net = rememberNetworkStatus()
+    val context = LocalContext.current
+    val hasGoogleTv = remember { isGoogleTvHomeAvailable(context) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(tvName, color = Gold.Primary, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
 
@@ -167,9 +185,14 @@ private fun Header(tvName: String, clock: String, onOpenSettings: () -> Unit, on
         Spacer(Modifier.width(20.dp))
         Text(clock, color = Ink.Text, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(18.dp))
-        HeaderButton(Icons.Filled.Settings, LocalStrings.current.settings, onOpenSettings)
+        HeaderButton(Icons.Filled.Apps, LocalStrings.current.allApps, onOpenAllApps)
         Spacer(Modifier.width(10.dp))
-        HeaderButton(Icons.Filled.Home, "Google TV", onGoogleTv)
+        HeaderButton(Icons.Filled.Settings, LocalStrings.current.settings, onOpenSettings)
+        // Hidden once Google TV's launcher is disabled to make SM TV the home screen.
+        if (hasGoogleTv) {
+            Spacer(Modifier.width(10.dp))
+            HeaderButton(Icons.Filled.Home, "Google TV", onGoogleTv)
+        }
     }
 }
 
@@ -188,7 +211,7 @@ private fun HeaderButton(icon: ImageVector, label: String, onClick: () -> Unit) 
 }
 
 @Composable
-private fun AppTile(app: TvApp, modifier: Modifier, onClick: () -> Unit) {
+fun AppTile(app: TvApp, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val context = LocalContext.current
     val banner: Drawable? = remember(app.packageName) {
         runCatching {

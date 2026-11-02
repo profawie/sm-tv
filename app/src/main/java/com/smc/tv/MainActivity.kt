@@ -2,6 +2,7 @@ package com.smc.tv
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -15,6 +16,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.smc.tv.data.PrayerDay
 import com.smc.tv.data.PrayerRepository
 import com.smc.tv.data.SettingsStore
+import com.smc.tv.data.SolarRepository
+import com.smc.tv.data.SolarStatus
+import com.smc.tv.ui.AllAppsScreen
+import androidx.compose.runtime.mutableIntStateOf
 import com.smc.tv.data.Wallpaper
 import com.smc.tv.data.WallpaperRepository
 import com.smc.tv.data.Weather
@@ -34,11 +39,14 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.delay
 
-private enum class Screen { HOME, SETTINGS, WEATHER, CCTV }
+private enum class Screen { HOME, SETTINGS, WEATHER, CCTV, ALL_APPS }
 
 class MainActivity : ComponentActivity() {
     private val prayerRepo = PrayerRepository()
     private val weatherRepo = WeatherRepository()
+    private val solarRepo = SolarRepository()
+    /** Bumped when the Home button is pressed while SM TV is already open. */
+    private val homePresses = mutableIntStateOf(0)
     private val wallpaperRepo = WallpaperRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +59,21 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(LocalStrings provides stringsFor(settings.language)) {
                 SmTvTheme {
                     var screen by remember { mutableStateOf(Screen.HOME) }
+                    LaunchedEffect(homePresses.intValue) { screen = Screen.HOME }
+                    var solar by remember { mutableStateOf<Loadable<SolarStatus>?>(null) }
+                    LaunchedEffect(settings.solarToken) {
+                        if (settings.solarToken.isBlank()) {
+                            solar = null
+                            return@LaunchedEffect
+                        }
+                        solar = Loadable.Loading
+                        while (true) {
+                            solar = runCatching { solarRepo.status(settings.solarToken) }
+                                .fold({ Loadable.Ready(it) }, { (solar as? Loadable.Ready) ?: Loadable.Failed(it.message) })
+                            // Growatt updates plant data about every 5 minutes.
+                            delay(5 * 60_000L)
+                        }
+                    }
                     var radarTiles by remember { mutableStateOf<String?>(null) }
                     var prayer by remember { mutableStateOf<Loadable<PrayerDay>>(Loadable.Loading) }
                     var weather by remember { mutableStateOf<Loadable<Weather>>(Loadable.Loading) }
@@ -132,6 +155,10 @@ class MainActivity : ComponentActivity() {
                             BackHandler { screen = Screen.HOME }
                             CctvScreen(settings.cctv, onBack = { screen = Screen.HOME })
                         }
+                        Screen.ALL_APPS -> {
+                            BackHandler { screen = Screen.HOME }
+                            AllAppsScreen(onBack = { screen = Screen.HOME })
+                        }
                         Screen.HOME -> {
                             // As a home screen, Back should stay here instead of closing the launcher.
                             BackHandler {}
@@ -139,10 +166,12 @@ class MainActivity : ComponentActivity() {
                                 settings = settings,
                                 prayer = prayer,
                                 weather = weather,
+                                solar = solar,
                                 wallpaper = wallpaper,
                                 wallpaperLoading = wallpaperLoading,
                                 onOpenSettings = { screen = Screen.SETTINGS },
                                 onOpenWeather = { screen = Screen.WEATHER },
+                                onOpenAllApps = { screen = Screen.ALL_APPS },
                                 onOpenCctv = { screen = Screen.CCTV },
                             )
                         }
@@ -150,6 +179,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) homePresses.intValue++
     }
 
     /** Android only reveals the WiFi name (SSID) to apps holding location permission. */
