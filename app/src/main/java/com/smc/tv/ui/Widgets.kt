@@ -56,7 +56,7 @@ fun WidgetPanel(
     Column(
         modifier
             .then(frame)
-            .padding(horizontal = 18.dp, vertical = 14.dp)
+            .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
         Text(title, color = Gold.Primary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 10.sp)
@@ -84,7 +84,7 @@ fun PrayerWidget(state: Loadable<PrayerDay>, now: Instant, modifier: Modifier = 
         modifier
             .background(Ink.Glass, PanelShape)
             .border(1.dp, Gold.Dim.copy(alpha = 0.5f), PanelShape)
-            .padding(horizontal = 18.dp, vertical = 10.dp),
+            .padding(horizontal = 18.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Sunrise is shown but is not a prayer, so it never counts as "next".
@@ -147,25 +147,25 @@ fun WeatherWidget(
             return@WidgetPanel
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(weatherIcon(w.code, w.isDay), fontSize = 32.sp)
+            Text(weatherIcon(w.code, w.isDay), fontSize = 26.sp)
             Spacer(Modifier.width(10.dp))
             Column {
-                Text("${w.temperature.roundToInt()}°C", color = Ink.Text, fontSize = 30.sp, fontWeight = FontWeight.Light)
+                Text("${w.temperature.roundToInt()}°C", color = Ink.Text, fontSize = 26.sp, fontWeight = FontWeight.Light)
                 Text(s.weatherLabel(w.code), color = Gold.Light, fontSize = 12.sp)
             }
         }
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(2.dp))
         Text(
             s.weatherDetails(w.feelsLike.roundToInt(), w.humidity, w.windKmh.roundToInt()),
-            color = Ink.Muted, fontSize = 10.sp,
+            color = Ink.Muted, fontSize = 10.sp, lineHeight = 13.sp,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             w.daily.drop(1).take(3).forEach { d ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(dayFmt.format(d.date), color = Ink.Muted, fontSize = 10.sp)
-                    Text(weatherIcon(d.code), fontSize = 16.sp)
-                    Text("${d.max.roundToInt()}° / ${d.min.roundToInt()}°", color = Ink.Text, fontSize = 10.sp)
+                    Text(dayFmt.format(d.date), color = Ink.Muted, fontSize = 10.sp, lineHeight = 12.sp)
+                    Text(weatherIcon(d.code), fontSize = 14.sp, lineHeight = 18.sp)
+                    Text("${d.max.roundToInt()}° / ${d.min.roundToInt()}°", color = Ink.Text, fontSize = 10.sp, lineHeight = 12.sp)
                 }
             }
         }

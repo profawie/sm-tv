@@ -319,14 +319,14 @@ private fun CctvSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSe
                 onDone = ::saveCctv,
                 label = s.cctvAddress,
                 keyboardType = KeyboardType.Uri,
-                modifier = Modifier.width(180.dp),
+                modifier = Modifier.width(170.dp),
             )
             GoldTextField(
                 value = cctvUser,
                 onValueChange = { cctvUser = it },
                 onDone = ::saveCctv,
                 label = s.cctvUsername,
-                modifier = Modifier.width(160.dp),
+                modifier = Modifier.width(130.dp),
             )
             GoldTextField(
                 value = cctvPassword,
@@ -334,7 +334,7 @@ private fun CctvSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSe
                 onDone = ::saveCctv,
                 label = s.cctvPassword,
                 isPassword = true,
-                modifier = Modifier.width(180.dp),
+                modifier = Modifier.width(160.dp),
             )
             ActionChip(s.save, onClick = ::saveCctv)
         }

@@ -1,6 +1,9 @@
 package com.smc.tv.ui
 
+import android.view.Gravity
+import android.view.TextureView
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -42,11 +45,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
 
 private enum class CctvState { CONNECTING, PLAYING, ERROR }
@@ -69,6 +72,7 @@ fun CctvPlayer(url: String?, modifier: Modifier = Modifier, muted: Boolean = tru
         val lifecycle = LocalLifecycleOwner.current.lifecycle
         var state by remember(url) { mutableStateOf(CctvState.CONNECTING) }
         var retry by remember(url) { mutableStateOf(0) }
+        var videoAspect by remember(url) { mutableStateOf<Float?>(null) }
 
         val player = remember(url) {
             ExoPlayer.Builder(context).build().apply {
@@ -89,6 +93,12 @@ fun CctvPlayer(url: String?, modifier: Modifier = Modifier, muted: Boolean = tru
 
                 override fun onPlayerError(error: PlaybackException) {
                     state = CctvState.ERROR
+                }
+
+                override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    if (videoSize.width > 0 && videoSize.height > 0) {
+                        videoAspect = videoSize.width * videoSize.pixelWidthHeightRatio / videoSize.height
+                    }
                 }
             }
             player.addListener(listener)
@@ -123,19 +133,32 @@ fun CctvPlayer(url: String?, modifier: Modifier = Modifier, muted: Boolean = tru
             }
         }
 
+        // A TextureView composes like a normal view; PlayerView's default SurfaceView punches a
+        // hole in the window, which blanked the screen when used inside scrolling Settings.
         AndroidView(
             factory = { ctx ->
-                PlayerView(ctx).apply {
-                    useController = false
+                AspectRatioFrameLayout(ctx).apply {
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                    setShutterBackgroundColor(android.graphics.Color.BLACK)
-                    layoutParams = ViewGroup.LayoutParams(
+                    val texture = TextureView(ctx)
+                    addView(
+                        texture,
+                        FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            Gravity.CENTER,
+                        ),
+                    )
+                    layoutParams = FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
+                        Gravity.CENTER,
                     )
                 }
             },
-            update = { it.player = player },
+            update = { frame ->
+                player.setVideoTextureView(frame.getChildAt(0) as TextureView)
+                videoAspect?.let { frame.setAspectRatio(it) }
+            },
             modifier = Modifier.fillMaxSize(),
         )
 

@@ -76,7 +76,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) { runCatching { firstApp.requestFocus() } }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 20.dp)) {
             Header(
                 tvName = settings.tvName,
                 clock = ClockFmt.format(now),
@@ -85,10 +85,10 @@ fun HomeScreen(
                 onGoogleTv = { openGoogleTvHome(context) },
             )
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
             // Row 1: prayer times across the full width.
             PrayerWidget(prayer, now.atZone(MALAYSIA_ZONE).toInstant(), Modifier.fillMaxWidth())
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
 
             // Row 2: weather, solar and CCTV side by side.
             Row(
