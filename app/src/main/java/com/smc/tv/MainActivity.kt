@@ -3,6 +3,9 @@ package com.smc.tv
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -39,6 +42,8 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.delay
 
+private const val RETRY_MS = 30_000L
+
 private enum class Screen { HOME, SETTINGS, WEATHER, CCTV, ALL_APPS }
 
 class MainActivity : ComponentActivity() {
@@ -48,11 +53,29 @@ class MainActivity : ComponentActivity() {
     /** Bumped when the Home button is pressed while SM TV is already open. */
     private val homePresses = mutableIntStateOf(0)
     private val wallpaperRepo = WallpaperRepository()
+    /** Bumped each time the TV gets a working internet connection (e.g. WiFi coming back). */
+    private val networkUps = mutableIntStateOf(0)
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        // Capabilities change often (signal strength etc.), so only count offline -> online.
+        // Starts false so a TV that boots before WiFi is ready reloads once it connects.
+        private var online = false
+
+        override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+            val validated = caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            if (validated && !online) runOnUiThread { networkUps.intValue++ }
+            online = validated
+        }
+
+        override fun onLost(network: Network) {
+            online = false
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val store = SettingsStore(applicationContext)
         requestWifiNamePermission()
+        getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(networkCallback)
 
         setContent {
             val settings by store.settings.collectAsStateWithLifecycle()
@@ -61,17 +84,18 @@ class MainActivity : ComponentActivity() {
                     var screen by remember { mutableStateOf(Screen.HOME) }
                     LaunchedEffect(homePresses.intValue) { screen = Screen.HOME }
                     var solar by remember { mutableStateOf<Loadable<SolarStatus>?>(null) }
-                    LaunchedEffect(settings.solarToken) {
+                    val networkUp = networkUps.intValue
+                    LaunchedEffect(settings.solarToken, networkUp) {
                         if (settings.solarToken.isBlank()) {
                             solar = null
                             return@LaunchedEffect
                         }
-                        solar = Loadable.Loading
+                        if (solar == null) solar = Loadable.Loading
                         while (true) {
-                            solar = runCatching { solarRepo.status(settings.solarToken) }
-                                .fold({ Loadable.Ready(it) }, { (solar as? Loadable.Ready) ?: Loadable.Failed(it.message) })
+                            val result = runCatching { solarRepo.status(settings.solarToken) }
+                            solar = result.fold({ Loadable.Ready(it) }, { (solar as? Loadable.Ready) ?: Loadable.Failed(it.message) })
                             // Growatt updates plant data about every 5 minutes.
-                            delay(5 * 60_000L)
+                            delay(if (result.isSuccess) 5 * 60_000L else RETRY_MS)
                         }
                     }
                     var radarTiles by remember { mutableStateOf<String?>(null) }
@@ -82,25 +106,28 @@ class MainActivity : ComponentActivity() {
                     var wallpaperError by remember { mutableStateOf<String?>(null) }
 
                     // Prayer data is per day; re-check every 30 min so it rolls over after midnight.
-                    LaunchedEffect(settings.location) {
-                        prayer = Loadable.Loading
+                    // Each loader also restarts when the connection comes back, and retries
+                    // after 30 s on failure instead of waiting for the next regular refresh.
+                    LaunchedEffect(settings.location, networkUp) {
                         while (true) {
-                            prayer = runCatching { prayerRepo.today(settings.location) }
-                                .fold({ Loadable.Ready(it) }, { (prayer as? Loadable.Ready) ?: Loadable.Failed(it.message) })
-                            delay(30 * 60_000L)
+                            val result = runCatching { prayerRepo.today(settings.location) }
+                            prayer = result.fold({ Loadable.Ready(it) }, { (prayer as? Loadable.Ready) ?: Loadable.Failed(it.message) })
+                            delay(if (result.isSuccess) 30 * 60_000L else RETRY_MS)
                         }
                     }
-                    LaunchedEffect(settings.location) {
-                        weather = Loadable.Loading
+                    LaunchedEffect(settings.location, networkUp) {
                         while (true) {
-                            weather = runCatching { weatherRepo.current(settings.location) }
-                                .fold({ Loadable.Ready(it) }, { (weather as? Loadable.Ready) ?: Loadable.Failed(it.message) })
-                            delay(15 * 60_000L)
+                            val result = runCatching { weatherRepo.current(settings.location) }
+                            weather = result.fold({ Loadable.Ready(it) }, { (weather as? Loadable.Ready) ?: Loadable.Failed(it.message) })
+                            delay(if (result.isSuccess) 15 * 60_000L else RETRY_MS)
                         }
                     }
                     // New photo every hour, or immediately when changed in Settings.
                     // The image is downloaded before it replaces the old one, so there is no blank flash.
-                    LaunchedEffect(settings.wallpaperTopic, settings.wallpaperSeed) {
+                    // A reconnect only refetches when there's no photo yet, so it doesn't swap the current one.
+                    var wallpaperRetry by remember { mutableIntStateOf(0) }
+                    LaunchedEffect(networkUp) { if (wallpaper == null && wallpaperRepo.hasKey) wallpaperRetry++ }
+                    LaunchedEffect(settings.wallpaperTopic, settings.wallpaperSeed, wallpaperRetry) {
                         while (true) {
                             wallpaperLoading = wallpaperRepo.hasKey
                             wallpaperError = null
@@ -115,7 +142,7 @@ class MainActivity : ComponentActivity() {
                                 .onSuccess { wallpaper = it }
                                 .onFailure { wallpaperError = it.message ?: "error" }
                             wallpaperLoading = false
-                            delay(60 * 60_000L)
+                            delay(if (wallpaperError == null) 60 * 60_000L else RETRY_MS)
                         }
                     }
 
@@ -179,6 +206,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(networkCallback) }
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
