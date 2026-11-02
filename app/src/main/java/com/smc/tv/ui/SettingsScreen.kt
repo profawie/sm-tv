@@ -51,6 +51,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +73,7 @@ import com.smc.tv.data.Language
 import com.smc.tv.data.Location
 import com.smc.tv.data.WALLPAPER_TOPICS
 import com.smc.tv.data.WeatherRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class SettingsPage { GENERAL, LOCATION, WALLPAPER, CCTV, SOLAR, ABOUT }
@@ -436,9 +443,9 @@ private fun ActionChip(
 }
 
 /**
- * Text field for a remote: D-pad focus only highlights it. The on-screen keyboard opens
- * when OK is pressed, and focus returns here after Done, so moving through Settings
- * doesn't keep popping the keyboard up.
+ * Text field for a remote: D-pad focus only highlights it (it stays read-only, so no
+ * keyboard). OK switches it to editing and opens the keyboard; Done or leaving the field
+ * switches back, so moving through Settings doesn't keep popping the keyboard up.
  */
 @Composable
 private fun GoldTextField(
@@ -452,56 +459,48 @@ private fun GoldTextField(
     keyboardType: KeyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text,
 ) {
     var editing by remember { mutableStateOf(false) }
-    var highlighted by remember { mutableStateOf(false) }
-    var fieldFocused by remember { mutableStateOf(false) }
-    val field = remember { FocusRequester() }
-    val wrapper = remember { FocusRequester() }
-    var started by remember { mutableStateOf(false) }
+    val keyboard = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(editing) {
         if (editing) {
-            started = true
-            runCatching { field.requestFocus() }
-        } else if (started) {
-            runCatching { wrapper.requestFocus() }
+            // Newer Android TV (e.g. Chromecast on Android 14) doesn't always open the
+            // keyboard by itself when a field becomes editable, so ask for it explicitly.
+            delay(100)
+            keyboard?.show()
         }
     }
 
-    Box(
-        modifier
-            .focusRequester(wrapper)
-            .focusProperties { canFocus = !editing }
-            .onFocusChanged { highlighted = it.isFocused }
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { editing = true }
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = true,
-            placeholder = placeholder?.let { { Text(it, color = Ink.Muted) } },
-            label = label?.let { { Text(it, color = Ink.Muted) } },
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = {
-                onDone()
-                editing = false
-            }),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Gold.Primary,
-                unfocusedBorderColor = if (highlighted) Gold.Primary else Gold.Dim,
-                focusedTextColor = Ink.Text,
-                unfocusedTextColor = Ink.Text,
-                cursorColor = Gold.Primary,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(field)
-                .focusProperties { canFocus = editing }
-                .onFocusChanged {
-                    // Leaving the field (Back, or D-pad out) ends editing.
-                    if (fieldFocused && !it.isFocused) editing = false
-                    fieldFocused = it.isFocused
-                },
-        )
-    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        readOnly = !editing,
+        placeholder = placeholder?.let { { Text(it, color = Ink.Muted) } },
+        label = label?.let { { Text(it, color = Ink.Muted) } },
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = {
+            onDone()
+            editing = false
+            keyboard?.hide()
+        }),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Gold.Primary,
+            unfocusedBorderColor = Gold.Dim,
+            focusedTextColor = Ink.Text,
+            unfocusedTextColor = Ink.Text,
+            cursorColor = Gold.Primary,
+        ),
+        modifier = modifier
+            .onFocusChanged { if (!it.isFocused) editing = false }
+            .onPreviewKeyEvent { event ->
+                val isOk = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+                if (!editing && isOk) {
+                    if (event.type == KeyEventType.KeyUp) editing = true
+                    true
+                } else {
+                    false
+                }
+            },
+    )
 }

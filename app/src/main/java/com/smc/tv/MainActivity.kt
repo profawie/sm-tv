@@ -3,6 +3,7 @@ package com.smc.tv
 import android.Manifest
 import android.content.pm.PackageManager
 import android.content.Intent
+import kotlin.coroutines.cancellation.CancellationException
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -43,6 +44,20 @@ import coil.request.SuccessResult
 import kotlinx.coroutines.delay
 
 private const val RETRY_MS = 30_000L
+
+/**
+ * Like runCatching, but lets coroutine cancellation through, so a loader restarted by a
+ * settings or network change doesn't record "the coroutine scope left the composition"
+ * as a load error.
+ */
+private inline fun <T> attempt(block: () -> T): Result<T> =
+    try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 
 private enum class Screen { HOME, SETTINGS, WEATHER, CCTV, ALL_APPS }
 
@@ -92,7 +107,7 @@ class MainActivity : ComponentActivity() {
                         }
                         if (solar == null) solar = Loadable.Loading
                         while (true) {
-                            val result = runCatching { solarRepo.status(settings.solarToken) }
+                            val result = attempt { solarRepo.status(settings.solarToken) }
                             solar = result.fold({ Loadable.Ready(it) }, { (solar as? Loadable.Ready) ?: Loadable.Failed(it.message) })
                             // Growatt updates plant data about every 5 minutes.
                             delay(if (result.isSuccess) 5 * 60_000L else RETRY_MS)
@@ -110,14 +125,14 @@ class MainActivity : ComponentActivity() {
                     // after 30 s on failure instead of waiting for the next regular refresh.
                     LaunchedEffect(settings.location, networkUp) {
                         while (true) {
-                            val result = runCatching { prayerRepo.today(settings.location) }
+                            val result = attempt { prayerRepo.today(settings.location) }
                             prayer = result.fold({ Loadable.Ready(it) }, { (prayer as? Loadable.Ready) ?: Loadable.Failed(it.message) })
                             delay(if (result.isSuccess) 30 * 60_000L else RETRY_MS)
                         }
                     }
                     LaunchedEffect(settings.location, networkUp) {
                         while (true) {
-                            val result = runCatching { weatherRepo.current(settings.location) }
+                            val result = attempt { weatherRepo.current(settings.location) }
                             weather = result.fold({ Loadable.Ready(it) }, { (weather as? Loadable.Ready) ?: Loadable.Failed(it.message) })
                             delay(if (result.isSuccess) 15 * 60_000L else RETRY_MS)
                         }
@@ -131,7 +146,7 @@ class MainActivity : ComponentActivity() {
                         while (true) {
                             wallpaperLoading = wallpaperRepo.hasKey
                             wallpaperError = null
-                            runCatching {
+                            attempt {
                                 wallpaperRepo.random(settings.wallpaperTopic)?.also { next ->
                                     val result = imageLoader.execute(
                                         ImageRequest.Builder(this@MainActivity).data(next.imageUrl).build()
