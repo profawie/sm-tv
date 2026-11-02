@@ -7,7 +7,6 @@ import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
@@ -180,7 +179,8 @@ fun CctvWidget(cctv: CctvSettings, modifier: Modifier = Modifier, onClick: () ->
     WidgetPanel(title = s.cctvTitle, subtitle = s.camera(cctv.channel), modifier = modifier, onClick = onClick) {
         CctvPlayer(
             url = cctv.rtspUrl(CctvStream.SUB),
-            modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(10.dp)),
+            // Fill whatever the panel leaves; the video itself letterboxes to its aspect ratio.
+            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)),
         )
     }
 }

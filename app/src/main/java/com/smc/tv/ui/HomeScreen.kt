@@ -96,7 +96,8 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 WeatherWidget(weather, settings.location.name, Modifier.weight(1f).fillMaxHeight(), onClick = onOpenWeather)
-                SolarWidget(solar, Modifier.weight(1f).fillMaxHeight())
+                // Hidden until a Growatt API token is set, so weather and CCTV get the space.
+                if (solar != null) SolarWidget(solar, Modifier.weight(1f).fillMaxHeight())
                 CctvWidget(settings.cctv, Modifier.weight(1.2f).fillMaxHeight(), onClick = onOpenCctv)
             }
             Spacer(Modifier.height(14.dp))
