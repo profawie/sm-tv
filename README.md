@@ -2,6 +2,8 @@
 
 A custom home screen (launcher) for Google TV / Android TV, with a dark and gold theme. It has been tested on a Xiaomi Mi TV (MiTV-AFKR0, Android 11) and a Chromecast with Google TV (Android 14).
 
+![SM TV home screen](docs/screenshots/home.png)
+
 > **Disclaimer:** This project is for entertainment purposes only. If you build or install it yourself, you do so at your own risk. The author accepts no responsibility for any damage, data loss or other problems that may result.
 
 ## Features
