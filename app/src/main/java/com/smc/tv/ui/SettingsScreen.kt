@@ -37,6 +37,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +61,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -106,7 +108,7 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp, vertical = 32.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text(s.settings, color = Gold.Primary, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+            Text(s.settings, color = Gold.Primary, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
             Text(settings.tvName, color = Ink.Muted, fontSize = 12.sp)
             Spacer(Modifier.height(18.dp))
             val items = listOf(
@@ -187,7 +189,7 @@ private fun MenuItem(
         }
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(12.dp))
-        Text(label, color = color, fontSize = 15.sp, fontWeight = if (focused || selected) FontWeight.SemiBold else FontWeight.Normal)
+        Text(label, color = color, fontSize = 14.sp, fontWeight = if (focused || selected) FontWeight.SemiBold else FontWeight.Normal)
     }
 }
 
@@ -367,7 +369,7 @@ private fun CctvSection(settings: AppSettings, onUpdate: ((AppSettings) -> AppSe
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 (1..CCTV_MAX_CHANNELS).forEach { ch ->
-                    ActionChip("$ch", selected = ch == settings.cctv.channel, modifier = Modifier.width(56.dp)) {
+                    ActionChip("$ch", selected = ch == settings.cctv.channel, modifier = Modifier.width(48.dp)) {
                         onUpdate { it.copy(cctv = it.cctv.copy(channel = ch)) }
                     }
                 }
@@ -417,8 +419,8 @@ private const val CCTV_MAX_CHANNELS = 16
 @Composable
 private fun Section(title: String, subtitle: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Text(title, color = Gold.Light, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-        if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 13.sp)
+        Text(title, color = Gold.Light, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+        if (subtitle != null) Text(subtitle, color = Ink.Muted, fontSize = 12.sp)
         Spacer(Modifier.height(10.dp))
         content()
     }
@@ -434,11 +436,14 @@ private fun ActionChip(
     Text(
         label,
         color = if (selected) Gold.Primary else Ink.Text,
-        fontSize = 15.sp,
+        fontSize = 13.sp,
         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+        maxLines = 1,
+        softWrap = false,
+        textAlign = TextAlign.Center,
         modifier = modifier
-            .tvFocusable(shape = RoundedCornerShape(12.dp), focusedScale = 1.04f, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 9.dp),
+            .tvFocusable(shape = RoundedCornerShape(10.dp), focusedScale = 1.04f, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 7.dp),
     )
 }
 
@@ -475,8 +480,9 @@ private fun GoldTextField(
         onValueChange = onValueChange,
         singleLine = true,
         readOnly = !editing,
-        placeholder = placeholder?.let { { Text(it, color = Ink.Muted) } },
-        label = label?.let { { Text(it, color = Ink.Muted) } },
+        textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+        placeholder = placeholder?.let { { Text(it, color = Ink.Muted, fontSize = 13.sp) } },
+        label = label?.let { { Text(it, color = Ink.Muted, fontSize = 12.sp) } },
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = {
