@@ -1,5 +1,6 @@
 package com.smc.tv.data
 
+import com.smc.tv.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -26,7 +27,8 @@ class SolarRepository {
     private var cachedDevices: Pair<String, SolarDevices>? = null // token -> devices
 
     suspend fun status(token: String): SolarStatus {
-        val headers = mapOf("token" to token.trim())
+        // Growatt answers 403 to Android's default "Dalvik" agent, so name the app instead.
+        val headers = mapOf("token" to token.trim(), "User-Agent" to "SM-TV/${BuildConfig.VERSION_NAME}")
         val devices = cachedDevices?.takeIf { it.first == token }?.second
             ?: deviceList(headers).also { cachedDevices = token to it }
 
