@@ -81,7 +81,7 @@ interface Strings {
     val solarNoToken: String
     val solarNow: String
     val solarToday: String
-    val solarMonth: String
+    val solarBattery: String
     val solarTotal: String
     fun solarUpdated(time: String): String
     val solarSection: String
@@ -200,11 +200,11 @@ object MalayStrings : Strings {
     override val solarNoToken = "Masukkan token API Growatt di Tetapan"
     override val solarNow = "Kuasa semasa"
     override val solarToday = "Hari ini"
-    override val solarMonth = "Bulan ini"
+    override val solarBattery = "Bateri"
     override val solarTotal = "Jumlah"
     override fun solarUpdated(time: String) = "Dikemas kini $time"
     override val solarSection = "Solar (Growatt)"
-    override val solarHint = "Log masuk ke server.growatt.com, kemudian dapatkan API token akaun anda dan masukkan di sini."
+    override val solarHint = "Mohon token API melalui akaun OSS Growatt (oss.growatt.com), kemudian masukkan di sini. Data dikemas kini setiap 10 minit."
     override val solarToken = "Token API"
     override val solarTokenSaved = "Token disimpan"
     override val general = "Umum"
@@ -312,11 +312,11 @@ object EnglishStrings : Strings {
     override val solarNoToken = "Enter your Growatt API token in Settings"
     override val solarNow = "Power now"
     override val solarToday = "Today"
-    override val solarMonth = "This month"
+    override val solarBattery = "Battery"
     override val solarTotal = "Total"
     override fun solarUpdated(time: String) = "Updated $time"
     override val solarSection = "Solar (Growatt)"
-    override val solarHint = "Sign in at server.growatt.com, get your account's API token and enter it here."
+    override val solarHint = "Apply for an API token through a Growatt OSS account (oss.growatt.com) and enter it here. Data refreshes every 10 minutes."
     override val solarToken = "API token"
     override val solarTokenSaved = "Token saved"
     override val general = "General"

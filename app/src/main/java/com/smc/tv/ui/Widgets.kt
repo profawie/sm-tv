@@ -176,7 +176,7 @@ fun WeatherWidget(
 fun SolarWidget(state: Loadable<SolarStatus>?, modifier: Modifier = Modifier) {
     val s = LocalStrings.current
     val solar = (state as? Loadable.Ready)?.value
-    WidgetPanel(title = s.solarTitle, subtitle = solar?.plantName ?: "Growatt", modifier = modifier) {
+    WidgetPanel(title = s.solarTitle, subtitle = solar?.statusText?.let { "Growatt · $it" } ?: "Growatt", modifier = modifier) {
         when {
             state == null -> Text(s.solarNoToken, color = Ink.Muted, fontSize = 12.sp)
             solar == null -> LoadingOrError(state)
@@ -191,14 +191,14 @@ fun SolarWidget(state: Loadable<SolarStatus>?, modifier: Modifier = Modifier) {
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    listOf(
-                        s.solarToday to solar.todayKwh,
-                        s.solarMonth to solar.monthKwh,
-                        s.solarTotal to solar.totalKwh,
-                    ).forEach { (label, kwh) ->
+                    listOfNotNull(
+                        s.solarToday to formatKwh(solar.todayKwh),
+                        s.solarTotal to formatKwh(solar.totalKwh),
+                        solar.batteryPercent?.let { s.solarBattery to "$it%" },
+                    ).forEach { (label, value) ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(label, color = Ink.Muted, fontSize = 10.sp)
-                            Text(formatKwh(kwh), color = Ink.Text, fontSize = 13.sp)
+                            Text(value, color = Ink.Text, fontSize = 13.sp)
                         }
                     }
                 }

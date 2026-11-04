@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.smc.tv.data.PrayerDay
 import com.smc.tv.data.PrayerRepository
 import com.smc.tv.data.SettingsStore
+import com.smc.tv.data.SolarRateLimited
 import com.smc.tv.data.SolarRepository
 import com.smc.tv.data.SolarStatus
 import com.smc.tv.ui.AllAppsScreen
@@ -44,6 +45,8 @@ import coil.request.SuccessResult
 import kotlinx.coroutines.delay
 
 private const val RETRY_MS = 30_000L
+private const val SOLAR_POLL_MS = 10 * 60_000L
+private const val SOLAR_RATE_LIMIT_RETRY_MS = 2 * 60_000L
 
 /**
  * Like runCatching, but lets coroutine cancellation through, so a loader restarted by a
@@ -108,9 +111,20 @@ class MainActivity : ComponentActivity() {
                         if (solar == null) solar = Loadable.Loading
                         while (true) {
                             val result = attempt { solarRepo.status(settings.solarToken) }
-                            solar = result.fold({ Loadable.Ready(it) }, { (solar as? Loadable.Ready) ?: Loadable.Failed(it.message) })
-                            // Growatt updates plant data about every 5 minutes.
-                            delay(if (result.isSuccess) 5 * 60_000L else RETRY_MS)
+                            val rateLimited = result.exceptionOrNull() is SolarRateLimited
+                            solar = result.fold({ Loadable.Ready(it) }, {
+                                (solar as? Loadable.Ready)
+                                    ?: if (rateLimited) Loadable.Loading else Loadable.Failed(it.message)
+                            })
+                            // Growatt allows one read per 5 minutes. Both TVs may share a token,
+                            // so read less often than that and try again soon when turned away.
+                            delay(
+                                when {
+                                    result.isSuccess -> SOLAR_POLL_MS
+                                    rateLimited -> SOLAR_RATE_LIMIT_RETRY_MS
+                                    else -> RETRY_MS
+                                },
+                            )
                         }
                     }
                     var radarTiles by remember { mutableStateOf<String?>(null) }
